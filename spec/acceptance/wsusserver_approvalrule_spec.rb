@@ -33,6 +33,11 @@ describe 'wsusserver_approvalrule' do
       describe command("((Get-WsusServer).GetInstallApprovalRules() | Where-Object { $PSItem.Name -eq '#{@approval_rule_name}' }).Enabled") do
         its(:stdout) { is_expected.to match %r{true}i }
       end
+
+      # Checking read-only properties have Something expected yet uncontrolled
+      describe command("((Get-WsusServer).GetInstallApprovalRules() | Where-Object { $PSItem.Name -eq '#{@approval_rule_name}' }).Id") do
+        its(:stdout) { is_expected.to match %r{^[0-9]+$} }
+      end
     end
 
     context 'with ensure => absent' do
@@ -90,7 +95,6 @@ describe 'wsusserver_approvalrule' do
         its(:stdout) { is_expected.to match %r{false}i }
       end
     end
-
   end
 
   # context 'when adding a classification to a rule' do
