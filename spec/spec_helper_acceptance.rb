@@ -3,6 +3,9 @@ require 'beaker-rspec/helpers/serverspec'
 require 'beaker/puppet_install_helper'
 require 'beaker/module_install_helper'
 
+# automatically load any shared examples or contexts
+Dir['./spec/support/**/*.rb'].sort.each { |f| require f }
+
 run_puppet_install_helper
 install_module
 install_module_dependencies
@@ -12,6 +15,5 @@ install_module_dependencies
 # install_module_from_forge('puppetlabs-apt', '>= 4.1.0 < 5.0.0')
 
 RSpec.configure do |c|
-  proj_root = File.expand_path(File.join(File.dirname(__FILE__), '..'))
   c.formatter = :documentation
 end

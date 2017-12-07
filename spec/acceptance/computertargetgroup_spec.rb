@@ -1,10 +1,8 @@
 require 'spec_helper_acceptance'
 
 describe 'wsusserver::computertargetgroup' do
-
   context 'when installing with provided mandatory parameters' do
-
-    let(:install_manifest) {
+    let(:manifest) do
       <<-MANIFEST
           class { 'wsusserver':
             targeting_mode                            => 'Client',
@@ -17,25 +15,17 @@ describe 'wsusserver::computertargetgroup' do
               ensure => 'present',
           }
         MANIFEST
-    }
-
-    it 'should run without errors' do
-      apply_manifest(install_manifest, :catch_failures => true)
     end
 
-    it 'should be idempotent' do
-      apply_manifest(install_manifest, :catch_changes => true)
-    end
+    it_behaves_like 'an idempotent resource'
 
     describe command('((Get-WsusServer).GetComputerTargetGroups() | Where-Object { $PSItem.Name -eq "Services" }).Count -eq 1') do
-       its(:stdout) { should match /true/i }
+      its(:stdout) { is_expected.to match %r{true}i }
     end
-
   end
 
   context 'when uninstalling with provided mandatory parameters' do
-
-    let(:install_manifest) {
+    let(:manifest) do
       <<-MANIFEST
           class { 'wsusserver':
             targeting_mode                            => 'Client',
@@ -48,19 +38,12 @@ describe 'wsusserver::computertargetgroup' do
               ensure => 'absent',
           }
         MANIFEST
-    }
-
-    it 'should run without errors' do
-      apply_manifest(install_manifest, :catch_failures => true)
     end
 
-    it 'should be idempotent' do
-      apply_manifest(install_manifest, :catch_changes => true)
-    end
+    it_behaves_like 'an idempotent resource'
 
     describe command('((Get-WsusServer).GetComputerTargetGroups() | Where-Object { $PSItem.Name -eq "Services" }).Count -eq 0') do
-       its(:stdout) { should match /true/i }
+      its(:stdout) { is_expected.to match %r{true}i }
     end
-
   end
 end
