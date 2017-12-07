@@ -3,7 +3,7 @@ require 'spec_helper_acceptance'
 describe 'wsusserver_approvalrule' do
   context 'when creating an approval rule' do
     context 'with default parameters' do
-      let(:approval_rule_name) { 'Automatic Approval for Security Updates Rule' }
+      @approval_rule_name = 'Automatic Approval for Security Updates Rule'
       let(:manifest) do
         <<-MANIFEST
             class { 'wsusserver':
@@ -14,29 +14,29 @@ describe 'wsusserver_approvalrule' do
               update_classifications                    => ['Critical Updates', 'Security Updates'],
             }
 
-            wsusserver_approvalrule { '#{approval_rule_name}':
+            wsusserver_approvalrule { '#{@approval_rule_name}':
               ensure => 'present',
             }
           MANIFEST
       end
 
       after(:all) do
-        resource('wsusserver_approvalrule', approval_rule_name, ensure: 'absent')
+        resource('wsusserver_approvalrule', @approval_rule_name, ensure: 'absent')
       end
 
       it_behaves_like 'an idempotent resource'
 
-      describe command("((Get-WsusServer).GetInstallApprovalRules() | Where-Object { $PSItem.Name -eq '#{approval_rule_name}'' }).Count -eq 1") do
+      describe command("((Get-WsusServer).GetInstallApprovalRules() | Where-Object { $PSItem.Name -eq '#{@approval_rule_name}'' }).Count -eq 1") do
         its(:stdout) { is_expected.to match %r{true}i }
       end
 
-      describe command("((Get-WsusServer).GetInstallApprovalRules() | Where-Object { $PSItem.Name -eq '#{approval_rule_name}' }).Enabled") do
+      describe command("((Get-WsusServer).GetInstallApprovalRules() | Where-Object { $PSItem.Name -eq '#{@approval_rule_name}' }).Enabled") do
         its(:stdout) { is_expected.to match %r{true}i }
       end
     end
 
     context 'with ensure => absent' do
-      let(:approval_rule_name) { 'Automatic Approval for Security Updates Rule' }
+      @approval_rule_name = 'Automatic Approval for Security Updates Rule'
       let(:manifest) do
         <<-MANIFEST
             class { 'wsusserver':
@@ -47,7 +47,7 @@ describe 'wsusserver_approvalrule' do
               update_classifications                    => ['Critical Updates', 'Security Updates'],
             }
 
-            wsusserver_approvalrule { '#{approval_rule_name}':
+            wsusserver_approvalrule { '#{@approval_rule_name}':
               ensure => 'absent',
             }
           MANIFEST
@@ -55,14 +55,14 @@ describe 'wsusserver_approvalrule' do
 
       it_behaves_like 'an idempotent resource'
 
-      describe command("((Get-WsusServer).GetInstallApprovalRules() | Where-Object { $PSItem.Name -eq '#{approval_rule_name}'' }).Count -eq 0") do
+      describe command("((Get-WsusServer).GetInstallApprovalRules() | Where-Object { $PSItem.Name -eq '#{@approval_rule_name}'' }).Count -eq 0") do
         its(:stdout) { is_expected.to match %r{true}i }
       end
 
     end
 
     context 'with enabled => false' do
-      let(:approval_rule_name) { 'Automatic Approval for Security Updates Rule' }
+      @approval_rule_name = 'Automatic Approval for Security Updates Rule'
       let(:manifest) do
         <<-MANIFEST
             class { 'wsusserver':
@@ -73,7 +73,7 @@ describe 'wsusserver_approvalrule' do
               update_classifications                    => ['Critical Updates', 'Security Updates'],
             }
 
-            wsusserver_approvalrule { '#{approval_rule_name}':
+            wsusserver_approvalrule { '#{@approval_rule_name}':
               ensure => 'present',
               enabled => false,
             }
@@ -81,12 +81,12 @@ describe 'wsusserver_approvalrule' do
       end
 
       after(:all) do
-        resource('wsusserver_approvalrule', approval_rule_name, ensure: 'absent')
+        resource('wsusserver_approvalrule', @approval_rule_name, ensure: 'absent')
       end
 
       it_behaves_like 'an idempotent resource'
 
-      describe command("((Get-WsusServer).GetInstallApprovalRules() | Where-Object { $PSItem.Name -eq '#{approval_rule_name}' }).Enabled") do
+      describe command("((Get-WsusServer).GetInstallApprovalRules() | Where-Object { $PSItem.Name -eq '#{@approval_rule_name}' }).Enabled") do
         its(:stdout) { is_expected.to match %r{false}i }
       end
     end
