@@ -8,9 +8,18 @@
   "project_page": "https://github.com/TraGicCode/tragiccode-wsusserver",
   "issues_url": "https://github.com/TraGicCode/tragiccode-wsusserver/issues",
   "dependencies": [
-    {"name":"puppetlabs-stdlib","version_requirement":"4.x"},
-    {"name":"puppetlabs-powershell","version_requirement":"2.x"},
-    {"name":"puppetlabs-dsc","version_requirement":"1.x"}
+    {
+      "name": "puppetlabs-stdlib",
+      "version_requirement": "4.x"
+    },
+    {
+      "name": "puppetlabs-powershell",
+      "version_requirement": "2.x"
+    },
+    {
+      "name": "puppetlabs-dsc",
+      "version_requirement": "1.x"
+    }
   ],
   "operatingsystem_support": [
     {
@@ -27,4 +36,3 @@
     }
   ]
 }
-
