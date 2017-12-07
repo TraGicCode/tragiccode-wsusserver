@@ -1,0 +1,30 @@
+{
+  "name": "tragiccode-wsusserver",
+  "version": "0.1.0",
+  "author": "tragiccode",
+  "summary": "The wsusserver module installs and manages the windows update services on Windows systems.",
+  "license": "Apache-2.0",
+  "source": "https://github.com/TraGicCode/tragiccode-wsusserver",
+  "project_page": "https://github.com/TraGicCode/tragiccode-wsusserver",
+  "issues_url": "https://github.com/TraGicCode/tragiccode-wsusserver/issues",
+  "dependencies": [
+    {"name":"puppetlabs-stdlib","version_requirement":"4.x"},
+    {"name":"puppetlabs-powershell","version_requirement":"2.x"},
+    {"name":"puppetlabs-dsc","version_requirement":"1.x"}
+  ],
+  "operatingsystem_support": [
+    {
+      "operatingsystem": "windows",
+      "operatingsystemrelease": [
+        "2016"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "name": "puppet",
+      "version_requirement": ">= 4.7.1 < 6.0.0"
+    }
+  ]
+}
+

@@ -1,0 +1,7 @@
+fixtures:
+    repositories:
+      stdlib: 'https://github.com/puppetlabs/puppetlabs-stdlib.git'
+      powershell: 'https://github.com/puppetlabs/puppetlabs-powershell.git'
+      dsc: 'https://github.com/puppetlabs/puppetlabs-dsc.git'
+    symlinks:
+      wsusserver: "#{source_dir}"

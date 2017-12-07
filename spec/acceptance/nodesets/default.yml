@@ -1,0 +1,17 @@
+---
+HOSTS:
+  windows-2016-standard:
+    roles:
+      - agent
+    platform: windows-server-amd64
+    box: tragiccode/windows-2016-standard
+    hypervisor: vagrant
+    user: vagrant
+    is_cygwin: false
+    # Run non-headless mode
+    vb_gui: true
+    vagrant_memsize: 4096
+    vagrant_cpus: 2
+CONFIG:
+  log_level: verbose
+  type: aio
