@@ -3,7 +3,9 @@ require 'spec_helper_acceptance'
 describe 'wsusserver_approvalrule' do
   context 'when creating an approval rule' do
     context 'with default parameters' do
-      @approval_rule_name = 'Automatic Approval for Security Updates Rule'
+      before(:all) do
+        @approval_rule_name = 'Automatic Approval for Security Updates Rule'
+      end
       let(:manifest) do
         <<-MANIFEST
             class { 'wsusserver':
@@ -41,7 +43,9 @@ describe 'wsusserver_approvalrule' do
     end
 
     context 'with ensure => absent' do
-      @approval_rule_name = 'Automatic Approval for Security Updates Rule'
+      before(:all) do
+        @approval_rule_name = 'Automatic Approval for Security Updates Rule'
+      end
       let(:manifest) do
         <<-MANIFEST
             class { 'wsusserver':
@@ -67,7 +71,9 @@ describe 'wsusserver_approvalrule' do
     end
 
     context 'with enabled => false' do
-      @approval_rule_name = 'Automatic Approval for Security Updates Rule'
+      before(:all) do
+        @approval_rule_name = 'Automatic Approval for Security Updates Rule'
+      end
       let(:manifest) do
         <<-MANIFEST
             class { 'wsusserver':
