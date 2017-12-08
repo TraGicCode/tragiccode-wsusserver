@@ -24,7 +24,6 @@ EOF
     json_parsed_output = JSON.parse(output)
     Puppet.debug("json parsed approval rules are #{json_parsed_output}")
     json_parsed_output.map do |rule|
-      Puppet.debug("json parsed rule is #{rule['name']} #{rule['enabled']} #{rule['rule_id']}")
       new(
         ensure:  :present,
         name:    rule['name'],
