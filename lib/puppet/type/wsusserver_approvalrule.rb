@@ -1,3 +1,5 @@
+require_relative '../../puppet_x/tragiccode/wsusserver_type_helpers'
+
 Puppet::Type.newtype(:wsusserver_approvalrule) do
   @doc = 'Creates an automatic approval rule for wsusserver.'
 

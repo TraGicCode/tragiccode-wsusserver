@@ -1,5 +1,3 @@
-require_relative '../../../puppet_x/tragiccode/wsusserver_type_helpers'
-
 Puppet::Type.type(:wsusserver_approvalrule).provide(:powershell) do
   commands powershell: 'powershell.exe'
 
@@ -11,14 +9,16 @@ Puppet::Type.type(:wsusserver_approvalrule).provide(:powershell) do
   # Initializes property_hash
   def self.instances
     get_approval_rules = <<-EOF
+$approval_rules = @()
 (Get-WsusServer).GetInstallApprovalRules() | % {
 
-  New-Object -TypeName PSObject -Property @{
+  $approval_rules += New-Object -TypeName PSObject -Property @{
     name    = $PSItem.Name
     enabled = $PSItem.Enabled
     rule_id = $PSItem.Id
   }
-} | ConvertTo-Json -Depth 10
+}
+ConvertTo-Json -InputObject $approval_rules -Depth 10
 EOF
     output = powershell(get_approval_rules)
     json_parsed_output = JSON.parse(output)
