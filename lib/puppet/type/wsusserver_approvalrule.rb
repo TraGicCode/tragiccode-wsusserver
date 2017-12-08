@@ -23,6 +23,9 @@ Puppet::Type.newtype(:wsusserver_approvalrule) do
 
   newproperty(:rule_id) do
     desc 'The auto-generated id of the approval rule. This property is read-only.'
+    munge do |value|
+      PuppetX::Tragiccode::TypeHelpers.munge_integer(value)
+    end
   end
 
   newproperty(:enabled) do
