@@ -42,7 +42,7 @@ EOF
       provider_instance = approval_rules.find { |approval_rule| approval_rule.name == resource[:name] }
       if provider_instance
         Puppet.debug("Assigning #{resource[:name]}, #{resource[:enabled]}")
-        resources[name].provider = provider
+        resources[name].provider = provider_instance
       end
     end
   end

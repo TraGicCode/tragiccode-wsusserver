@@ -32,6 +32,7 @@ Puppet::Type.newtype(:wsusserver_approvalrule) do
 
   newproperty(:enabled) do
     desc 'Specifies whether the rule is enabled or disabled.'
+    defaultto :true
     # rubocop:disable Lint/BooleanSymbol
     newvalue(:true)
     newvalue(:false)
