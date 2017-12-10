@@ -67,9 +67,15 @@ EOF
     create_approval_rule = <<-EOF
 $approval_rule = (Get-WsusServer).CreateInstallApprovalRule('#{resource[:name]}')
 $approval_rule.Enabled = $#{resource[:enabled]}
-$product_collection = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateCategoryCollection
-Get-WsusProduct | Select-Object -ExpandProperty Product | Where-Object { @(#{resource[:products].map { |product| '"' + product +'"' }.join(',')}) -contains $PSItem.Title } | % { $product_collection.Add($PSItem) }
-$approval_rule.SetCategories($product_collection)
+EOF
+    if !resource[:products].nil?
+      create_approval_rule << <<-EOF
+      $product_collection = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateCategoryCollection
+      Get-WsusProduct | Select-Object -ExpandProperty Product | Where-Object { @(#{resource[:products].map { |product| '"' + product +'"' }.join(',')}) -contains $PSItem.Title } | % { $product_collection.Add($PSItem) }
+      $approval_rule.SetCategories($product_collection)
+      EOF
+    end
+    create_approval_rule << <<-EOF
 $approval_rule.Save()
 EOF
     powershell(create_approval_rule)
