@@ -33,7 +33,7 @@ EOF
       approval_rule_hash[:ensure]  = :present
       approval_rule_hash[:name]    = rule['name']
       approval_rule_hash[:enabled] = rule['enabled'].to_s
-      approval_rule_hash[:rule_ud] = rule['rule_id']
+      approval_rule_hash[:rule_id] = rule['rule_id']
       if rule.key?('products')
          approval_rule_hash[:products] = rule['products']
       end
