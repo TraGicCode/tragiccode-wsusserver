@@ -129,7 +129,7 @@ describe 'wsusserver_approvalrule' do
 
       include_context 'with a puppet resource run'
       puppet_resource_should_show('ensure', 'present')
-      puppet_resource_should_show('enabled', 'false')
+      puppet_resource_should_show('enabled', 'true')
       puppet_resource_should_show('rule_id', %r{\d+})
     end
   end
