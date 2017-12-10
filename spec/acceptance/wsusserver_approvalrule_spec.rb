@@ -115,7 +115,7 @@ describe 'wsusserver_approvalrule' do
 
       wsusserver_approvalrule { '#{@approval_rule_name}':
         ensure   => 'present',
-        products => ['Windows Server 2016'],
+        products => ['SQL Server'],
       }
     MANIFEST
     end
@@ -131,6 +131,7 @@ describe 'wsusserver_approvalrule' do
       puppet_resource_should_show('ensure', 'present')
       puppet_resource_should_show('enabled', 'true')
       puppet_resource_should_show('rule_id', %r{\d+})
+      puppet_resource_should_show('products',  ['SQL Server'])
     end
   end
 
