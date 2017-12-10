@@ -100,6 +100,40 @@ describe 'wsusserver_approvalrule' do
       puppet_resource_should_show('rule_id', %r{\d+})
     end
   end
+
+  context 'with products => ["Windows Server 2016"]' do
+    before(:all) do
+      @approval_rule_name = SecureRandom.hex(10)
+      @manifest =  <<-MANIFEST
+      class { 'wsusserver':
+        targeting_mode                            => 'Client',
+        trigger_full_synchronization_post_install => false,
+        products                                  => ['SQL Server'],
+        update_languages                          => ['en'],
+        update_classifications                    => ['Critical Updates', 'Security Updates'],
+      }
+
+      wsusserver_approvalrule { '#{@approval_rule_name}':
+        ensure   => 'present',
+        products => ['Windows Server 2016'],
+      }
+    MANIFEST
+    end
+
+    it_behaves_like 'an idempotent resource'
+    
+    context 'when puppet resource is run' do
+      before(:all) do
+        @result = on(default, puppet('resource', 'wsusserver_approvalrule', @approval_rule_name))
+      end
+
+      include_context 'with a puppet resource run'
+      puppet_resource_should_show('ensure', 'present')
+      puppet_resource_should_show('enabled', 'false')
+      puppet_resource_should_show('rule_id', %r{\d+})
+    end
+  end
+
   # context 'when adding a classification to a rule' do
   #   let(:manifest) do
   #     <<-MANIFEST

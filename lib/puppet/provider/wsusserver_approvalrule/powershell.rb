@@ -34,7 +34,7 @@ EOF
       approval_rule_hash[:name]    = rule['name']
       approval_rule_hash[:enabled] = rule['enabled'].to_s
       approval_rule_hash[:rule_ud] = rule['rule_id']
-      if approval_rule_hash.key?('products')
+      if rule.key?('products')
          approval_rule_hash[:products] = rule['products']
       end
       new(
@@ -67,9 +67,9 @@ EOF
     create_approval_rule = <<-EOF
 $approval_rule = (Get-WsusServer).CreateInstallApprovalRule('#{resource[:name]}')
 $approval_rule.Enabled = $#{resource[:enabled]}
-$productCollection = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateCategoryCollection"
-Get-WsusProduct | Where-Object { @(#{resource[:products].map { |product| '"' + product +'"' }.join(',')}) -contains $PSItem.Title } | % { $productCollection.Add($PSItem) } "
-$approvalRule.SetCategories($productCollection)"
+$product_collection = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateCategoryCollection
+Get-WsusProduct | Select-Object -ExpandProperty Product | Where-Object { @(#{resource[:products].map { |product| '"' + product +'"' }.join(',')}) -contains $PSItem.Title } | % { $product_collection.Add($PSItem) }
+$approval_rule.SetCategories($product_collection)
 $approval_rule.Save()
 EOF
     powershell(create_approval_rule)
@@ -121,9 +121,9 @@ EOF
       flush_approval_rule = "$approval_rule = (Get-WsusServer).GetInstallApprovalRules() | Where-Object { $PSItem.Name -eq '#{resource[:name]}' }"
       flush_approval_rule << "\n$approval_rule.Enabled = $#{@property_flush[:enabled]}" if @property_flush[:enabled]
       if @property_flush[:products]
-        flush_approval_rule << "\n$productCollection = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateCategoryCollection"
-        flush_approval_rule << "\nGet-WsusProduct | Where-Object { @(#{@property_flush[:products].map { |product| '"' + product +'"' }.join(',')}) -contains $PSItem.Title } | % { $productCollection.Add($PSItem) } "
-        flush_approval_rule << "\n$approvalRule.SetCategories(\$productCollection)"
+        flush_approval_rule << "\n$product_collection = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateCategoryCollection"
+        flush_approval_rule << "\nGet-WsusProduct | Select-Object -ExpandProperty Product | Where-Object { @(#{@property_flush[:products].map { |product| '"' + product +'"' }.join(',')}) -contains $PSItem.Title } | % { $product_collection.Add($PSItem) } "
+        flush_approval_rule << "\n$approval_rule.SetCategories(\$product_collection)"
       end
       flush_approval_rule << "\n$approval_rule.Save()"
       powershell(flush_approval_rule)
