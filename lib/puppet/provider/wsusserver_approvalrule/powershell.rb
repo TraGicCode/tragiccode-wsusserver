@@ -12,11 +12,16 @@ Puppet::Type.type(:wsusserver_approvalrule).provide(:powershell) do
 $approval_rules = @()
 (Get-WsusServer).GetInstallApprovalRules() | % {
 
-  $approval_rules += New-Object -TypeName PSObject -Property @{
-    name    = $PSItem.Name
-    enabled = $PSItem.Enabled
-    rule_id = $PSItem.Id
+  $_approval_rule = New-Object -TypeName PSObject -Property @{
+    name     = $PSItem.Name
+    enabled  = $PSItem.Enabled
+    rule_id  = $PSItem.Id
   }
+  If ($PSItem.GetCategories().Count -ne 0)
+  {
+    Add-Member -InputObject $_approval_rule -MemberType NoteProperty -Name "products" -Value @($PSItem.GetCategories().Title)
+  }
+  $approval_rules += $_approval_rule
 }
 ConvertTo-Json -InputObject $approval_rules -Depth 10
 EOF
@@ -24,11 +29,16 @@ EOF
     json_parsed_output = JSON.parse(output)
     Puppet.debug("json parsed approval rules are #{json_parsed_output}")
     json_parsed_output.map do |rule|
+      approval_rule_hash = {}
+      approval_rule_hash[:ensure]  = :present
+      approval_rule_hash[:name]    = rule['name']
+      approval_rule_hash[:enabled] = rule['enabled'].to_s
+      approval_rule_hash[:rule_ud] = rule['rule_id']
+      if approval_rule_hash.key?('products')
+         approval_rule_hash[:products] = rule['products']
+      end
       new(
-        ensure:  :present,
-        name:    rule['name'],
-        enabled: rule['enabled'].to_s,
-        rule_id: rule['rule_id'],
+        approval_rule_hash
       )
     end
   end
@@ -80,6 +90,14 @@ EOF
     @property_flush[:enabled] = value
   end
 
+  def products
+    @property_hash[:products]
+  end
+
+  def products=(value)
+    @property_flush[:products] = value
+  end
+
   def rule_id
     @property_hash[:rule_id]
   end
@@ -99,6 +117,13 @@ EOF
     if should_flush_properties?
       flush_approval_rule = "$approval_rule = (Get-WsusServer).GetInstallApprovalRules() | Where-Object { $PSItem.Name -eq '#{resource[:name]}' }"
       flush_approval_rule << "\n$approval_rule.Enabled = $#{@property_flush[:enabled]}" if @property_flush[:enabled]
+      if @property_flush[:products]
+        #flush_approval_rule << "\n$productCollection = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateCategoryCollection"
+        @property_flush[:products].each do |product|
+          Puppet.debug("Product = #{product}")
+        end
+        #flush_approval_rule << "\n$approvalRule.SetCategories(\$productCollection)"
+      end
       flush_approval_rule << "\n$approval_rule.Save()"
       powershell(flush_approval_rule)
     end

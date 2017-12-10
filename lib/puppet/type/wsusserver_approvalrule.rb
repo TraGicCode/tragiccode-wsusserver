@@ -41,13 +41,42 @@ Puppet::Type.newtype(:wsusserver_approvalrule) do
       PuppetX::Tragiccode::TypeHelpers.munge_boolean(value)
     end
   end
+  # NOTE: If you set :array_matching to :all, EVERY value passed for that parameter/property will be cast to an array (which means if you pass a value of ‘foo’, 
+  # you’ll get an array with a single element – the string of ‘foo’).
+  #
+  # NOTE: What do i display if no products exist?
+  #       puppet user simply doesn't show the groups array if the user is in no groups
+  #       puppet host simply doesn't show the host_aliases if the host entry has none
+  # 
+  # user { 'nobody':
+  #   ensure   => 'present',
+  #   comment  => 'Unprivileged User',
+  #   gid      => -2,
+  #   home     => '/var/empty',
+  #   password => '*',
+  #   shell    => '/usr/bin/false',
+  #   uid      => -2,
+  # }
+  # user { 'root':
+  #   ensure   => 'present',
+  #   comment  => 'System Administrator',
+  #   gid      => 0,
+  #   groups   => ['admin', 'certusers', 'daemon', 'kmem', 'operator', 'procmod', 'procview', 'staff', 'sys', 'tty', 'wheel'],
+  #   home     => '/var/root',
+  #   password => '*',
+  #   shell    => '/bin/sh',
+  #   uid      => 0,
+  # }
+  newproperty(:products, :array_matching => :all) do
+      desc 'Specifies the products in which this rule should apply to.'
+      validate do |value|
+        # Each element in the array of it was an array that was even passed in
+        fail('Products for an approval rule must be a non-empty string.') if value.empty? || value.nil?
+      end
+  end
 
   # newproperty(:classifications, :array_matching => :all) do
   #     desc 'Specifies the classifications in which this rule should apply to.'
-  # end
-
-  # newproperty(:products, :array_matching => :all) do
-  #     desc 'Specifies the products in which this rule should apply to.'
   # end
 
   # newproperty(:computer_groups, :array_matching => :all) do
