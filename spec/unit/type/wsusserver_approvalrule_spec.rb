@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe 'wsusserver_approvalrule' do
+describe Puppet::Type.type(:wsusserver_approvalrule) do
   let(:type_class) { Puppet::Type.type(:wsusserver_approvalrule) }
   let(:parameters) { [:name] }
   let(:properties) { [:ensure, :enabled, :rule_id, :products] }
@@ -22,8 +22,6 @@ describe 'wsusserver_approvalrule' do
       expect { type_class.new(name: 'test', ensure: value) }.not_to raise_error # Notice this actually creates an instance of the type
     end
   end
-
-  
 
   ['^', '~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '=', '+', '[', ']', '{', '}', '\\', '|', ';', ':', '\'', '"', '<', '>', '/'].each do |invalid_character|
     context "with a name that contains an invalid character of #{invalid_character}" do

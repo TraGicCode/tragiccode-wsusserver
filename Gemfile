@@ -2,6 +2,7 @@ source ENV['GEM_SOURCE'] || 'https://rubygems.org'
 
 gem 'facter', '>= 1.7.0'
 gem 'guard-rake'
+gem 'guard-rspec', require: false
 gem 'metadata-json-lint'
 gem 'puppet', '>= 4.10.1'
 gem 'puppet-lint', '>= 1.0.0'
