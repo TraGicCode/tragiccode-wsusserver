@@ -36,6 +36,7 @@ describe Puppet::Type.type(:wsusserver_approvalrule) do
   subject { wsusserver_approvalrule }
 
   describe 'parameter :name' do
+
     it 'is a parameter' do
       expect(described_class.attrtype(:name)).to eq(:param)
     end
@@ -62,14 +63,13 @@ describe Puppet::Type.type(:wsusserver_approvalrule) do
     end
 
     ['^', '~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '=', '+', '[', ']', '{', '}', '\\', '|', ';', ':', '\'', '"', '<', '>', '/'].each do |invalid_character|
-    it "cannot contain the #{invalid_character} character" do
-      expect {
-        subject[:name] = invalid_character
-    }.to raise_error(Puppet::Error, %r{The approval rule name cannot contain any of the characters})
+      it "cannot contain the #{invalid_character} character" do
+        expect {
+          subject[:name] = invalid_character
+      }.to raise_error(Puppet::Error, %r{The approval rule name cannot contain any of the characters})
+      end
     end
   end
-  end
-
   describe 'property :ensure' do
     it 'is a property' do
       expect(described_class.attrtype(:ensure)).to eq(:property)
