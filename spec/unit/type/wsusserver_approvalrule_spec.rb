@@ -19,62 +19,72 @@ describe Puppet::Type.type(:wsusserver_approvalrule) do
 
   describe 'property :products' do
   end
+end
 
-  # it 'has expected parameters' do
-  #   parameters.each do |parameter|
-  #     expect(type_class.parameters).to include(parameter)
-  #   end
-  # end
 
-  # it 'has expected properties' do
-  #   properties.each do |property|
-  #     expect(type_class.properties.map(&:name)).to be_include(property)
-  #   end
-  # end
+require 'spec_helper'
 
-  # [:present, :absent].each do |value|
-  #   it "should accept #{value} as a value for :ensure" do
-  #     expect { type_class.new(name: 'test', ensure: value) }.not_to raise_error # Notice this actually creates an instance of the type
-  #   end
-  # end
+def wsusserver_approvalrule(params = {})
+  defaults = {
+    ensure: :present,
+    name: 'CustomApprovalRule',
+  }
+  described_class.new(**defaults.merge(params))
+end
 
-  # ['^', '~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '=', '+', '[', ']', '{', '}', '\\', '|', ';', ':', '\'', '"', '<', '>', '/'].each do |invalid_character|
-  #   context "with a name that contains an invalid character of #{invalid_character}" do
-  #     it 'throws a validation error' do
-  #       expect { type_class.new(name: invalid_character) }.to raise_error(Puppet::Error, %r{The approval rule name cannot contain any of the characters})
-  #     end
-  #   end
-  # end
+describe Puppet::Type.type(:wsusserver_approvalrule) do
+  subject { wsusserver_approvalrule }
 
-  # [true, false].each do |value|
-  #   it "should accept #{value} as a value for :enabled" do
-  #     expect { type_class.new(name: 'test', ensure: :present, enabled: value) }.not_to raise_error
-  #   end
-  # end
+  describe 'parameter :name' do
+    it 'is a parameter' do
+      expect(described_class.attrtype(:name)).to eq(:param)
+    end
 
-  # it "should accept an empty array for :products" do
-  #   expect { type_class.new(name: 'test', ensure: :present, products: []) }.not_to raise_error
-  # end
+    it 'is the namevar' do
+      expect(subject.parameters[:name]).to be_isnamevar
+    end
 
-  # it "should accept an array that contains string elements for :products" do
-  #   expect { type_class.new(name: 'test', ensure: :present, products: ['Windows Server 2016', 's']) }.not_to raise_error
-  # end
+    it 'has documentation' do
+      expect(described_class.attrclass(:name).doc).not_to eq("\n\n")
+    end
 
-  # it "should return an array for products" do
-  #   expect(type_class.new(name: 'test', ensure: :present, products: ['Windows Server 2016', 's'])[:products]).to eq ['Windows Server 2016', 's']
-  # end
+    it 'cannot be set to nil' do
+      expect {
+        subject[:name] = nil
+      }.to raise_error(Puppet::Error, %r{Got nil value for name})
+    end
+    # This protects against
+    # vscode_extension{ 's': ensure => present, extension_name => '', }
+    it 'cannot be set to an empty string' do
+      expect {
+        subject[:name] = ''
+      }.to raise_error(Puppet::Error, %r{A non-empty approval rule name must})
+    end
 
-  # it "should return an array of products when passed a string" do
-  #   expect(type_class.new(name: 'test', ensure: :present, products: 'Windows Server 2016')[:products]).to eq ['Windows Server 2016']
-  # end
+    ['^', '~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '=', '+', '[', ']', '{', '}', '\\', '|', ';', ':', '\'', '"', '<', '>', '/'].each do |invalid_character|
+    it "cannot contain the #{invalid_character} character" do
+      expect {
+        subject[:name] = invalid_character
+    }.to raise_error(Puppet::Error, %r{The approval rule name cannot contain any of the characters})
+    end
+  end
+  end
 
-  # # context 'when products is not passed an array' do
-  # #   it "should throw a validation error" do
-  # #     expect { type_class.new(name: 'test', ensure: :present, products: 1 ) }.to raise_error(Puppet::Error, %r{The approval rule products must be a non-empty array of products.})
-  # #   end
-  # # end
-  # # This happens in the provider code.  Might want to move this later.
-  # it 'has the powershell provider registered with it' do
-  #   expect(type_class.providers).to be_include(:powershell)
-  # end
+  describe 'property :ensure' do
+    it 'is a property' do
+      expect(described_class.attrtype(:ensure)).to eq(:property)
+    end
+
+    it 'has Puppet::Property::Ensure as a parent' do
+      expect(described_class.attrclass(:ensure).superclass).to eq(Puppet::Property::Ensure)
+    end
+
+    [:present, :absent].each do |ensure_value|
+      it "can set be set to #{ensure_value}" do
+        expect {
+          subject[:ensure] = ensure_value
+        }.not_to raise_error
+      end
+    end
+  end
 end

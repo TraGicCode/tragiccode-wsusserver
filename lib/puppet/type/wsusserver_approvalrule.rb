@@ -18,7 +18,7 @@ Puppet::Type.newtype(:wsusserver_approvalrule) do
   newparam(:name, namevar: true) do
     desc 'The name of the approval rule.'
     validate do |value|
-      fail('A non-empty approval rule must be specified.') if value.empty? || value.nil?
+      fail('A non-empty approval rule name must be specified.') if value.empty? || value.nil?
       fail('The approval rule name cannot contain any of the characters certain special characeters.') if value !~ %r{^[^~!@#$%^&*()=+\[\]{}\\|;:\'"<>\/]+$}
     end
   end
