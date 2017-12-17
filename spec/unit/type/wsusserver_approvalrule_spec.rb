@@ -1,29 +1,5 @@
 require 'spec_helper'
 
-describe Puppet::Type.type(:wsusserver_approvalrule) do
-  let(:type_class) { Puppet::Type.type(:wsusserver_approvalrule) }
-  let(:parameters) { [:name] }
-  let(:properties) { [:ensure, :enabled, :rule_id, :products] }
-
-  describe 'parameter :name' do
-    pending
-  end
-
-  describe 'property :rule_id' do
-    pending
-  end
-
-  describe 'property :enabled' do
-    pending
-  end
-
-  describe 'property :products' do
-  end
-end
-
-
-require 'spec_helper'
-
 def wsusserver_approvalrule(params = {})
   defaults = {
     ensure: :present,
@@ -70,7 +46,9 @@ describe Puppet::Type.type(:wsusserver_approvalrule) do
       end
     end
   end
+
   describe 'property :ensure' do
+
     it 'is a property' do
       expect(described_class.attrtype(:ensure)).to eq(:property)
     end
@@ -85,6 +63,24 @@ describe Puppet::Type.type(:wsusserver_approvalrule) do
           subject[:ensure] = ensure_value
         }.not_to raise_error
       end
+    end
+  end
+
+  describe 'property :rule_id' do
+    it 'is a property' do
+      expect(described_class.attrtype(:ensure)).to eq(:property)
+    end
+  end
+
+  describe 'property :enabled' do
+    it 'is a property' do
+      expect(described_class.attrtype(:ensure)).to eq(:property)
+    end
+  end
+
+  describe 'property :products' do
+    it 'is a property' do
+      expect(described_class.attrtype(:ensure)).to eq(:property)
     end
   end
 end
