@@ -1,5 +1,5 @@
 require 'spec_helper'
-
+require 'pry'
 def wsusserver_approvalrule(params = {})
   defaults = {
     ensure: :present,
@@ -109,17 +109,22 @@ describe Puppet::Type.type(:wsusserver_approvalrule) do
       end
     end
 
+    it 'defaults to true' do
+      expect(subject[:enabled]).to eq(:true)
+    end
+
     it 'cannot be set to an empty string' do
       expect {
-        subject[:ensure] = ''
+        subject[:enabled] = ''
       }.to raise_error(Puppet::Error, %r{Invalid value})
     end
 
     it 'cannot be set to nil' do
       expect {
-        subject[:ensure] = nil
-      }.to raise_error(Puppet::Error, %r{Got nil value for ensure})
+        subject[:enabled] = nil
+      }.to raise_error(Puppet::Error, %r{Got nil value for enabled})
     end
+
   end
 
   describe 'property :products' do
