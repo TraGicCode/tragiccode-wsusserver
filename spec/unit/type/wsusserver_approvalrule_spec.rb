@@ -61,6 +61,12 @@ describe Puppet::Type.type(:wsusserver_approvalrule) do
       expect(described_class.attrclass(:ensure).doc).not_to eq("\n\n")
     end
 
+    it 'is required' do
+      expect {
+        described_class.new(name: 'test')
+      }.to raise_error(Puppet::Error, %r{ensure is a required attribute})
+    end
+
     [:present, :absent].each do |ensure_value|
       it "can set be set to #{ensure_value}" do
         expect {

@@ -82,4 +82,8 @@ Puppet::Type.newtype(:wsusserver_approvalrule) do
   # newproperty(:computer_groups, :array_matching => :all) do
   #     desc 'Specifies the computer groups in which this rule should apply to.'
   # end
+
+  validate do
+    fail('ensure is a required attribute') if self[:ensure].nil?
+  end
 end
