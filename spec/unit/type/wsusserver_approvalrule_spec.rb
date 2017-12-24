@@ -125,6 +125,18 @@ describe Puppet::Type.type(:wsusserver_approvalrule) do
       }.to raise_error(Puppet::Error, %r{Got nil value for enabled})
     end
 
+    it 'cannot be set to an integer' do
+      expect {
+        subject[:enabled] = 1
+      }.to raise_error(Puppet::Error, %r{Invalid value})
+    end
+
+    it 'cannot be set to a float' do
+      expect {
+        subject[:enabled] = 1.0
+      }.to raise_error(Puppet::Error, %r{Invalid value})
+    end
+
   end
 
   describe 'property :products' do
