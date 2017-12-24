@@ -57,6 +57,10 @@ describe Puppet::Type.type(:wsusserver_approvalrule) do
       expect(described_class.attrclass(:ensure).superclass).to eq(Puppet::Property::Ensure)
     end
 
+    it 'has documentation' do
+      expect(described_class.attrclass(:name).doc).not_to eq("\n\n")
+    end
+
     [:present, :absent].each do |ensure_value|
       it "can set be set to #{ensure_value}" do
         expect {
@@ -64,11 +68,21 @@ describe Puppet::Type.type(:wsusserver_approvalrule) do
         }.not_to raise_error
       end
     end
+
+    it 'cannot be set to an empty string' do
+      expect {
+        subject[:ensure] = ''
+      }.to raise_error(Puppet::Error, %r{Invalid value})
+    end
   end
 
   describe 'property :rule_id' do
     it 'is a property' do
       expect(described_class.attrtype(:ensure)).to eq(:property)
+    end
+
+    it 'has documentation' do
+      expect(described_class.attrclass(:name).doc).not_to eq("\n\n")
     end
   end
 
@@ -76,11 +90,20 @@ describe Puppet::Type.type(:wsusserver_approvalrule) do
     it 'is a property' do
       expect(described_class.attrtype(:ensure)).to eq(:property)
     end
+
+    it 'has documentation' do
+      expect(described_class.attrclass(:name).doc).not_to eq("\n\n")
+    end
   end
 
   describe 'property :products' do
     it 'is a property' do
       expect(described_class.attrtype(:ensure)).to eq(:property)
     end
+
+    it 'has documentation' do
+      expect(described_class.attrclass(:name).doc).not_to eq("\n\n")
+    end
+
   end
 end
