@@ -58,7 +58,7 @@ describe Puppet::Type.type(:wsusserver_approvalrule) do
     end
 
     it 'has documentation' do
-      expect(described_class.attrclass(:name).doc).not_to eq("\n\n")
+      expect(described_class.attrclass(:ensure).doc).not_to eq("\n\n")
     end
 
     [:present, :absent].each do |ensure_value|
@@ -84,31 +84,51 @@ describe Puppet::Type.type(:wsusserver_approvalrule) do
 
   describe 'property :rule_id' do
     it 'is a property' do
-      expect(described_class.attrtype(:ensure)).to eq(:property)
+      expect(described_class.attrtype(:rule_id)).to eq(:property)
     end
 
     it 'has documentation' do
-      expect(described_class.attrclass(:name).doc).not_to eq("\n\n")
+      expect(described_class.attrclass(:rule_id).doc).not_to eq("\n\n")
     end
   end
 
   describe 'property :enabled' do
     it 'is a property' do
-      expect(described_class.attrtype(:ensure)).to eq(:property)
+      expect(described_class.attrtype(:enabled)).to eq(:property)
     end
 
     it 'has documentation' do
-      expect(described_class.attrclass(:name).doc).not_to eq("\n\n")
+      expect(described_class.attrclass(:enabled).doc).not_to eq("\n\n")
+    end
+
+    [true, false].each do |enabled_value|
+      it "can set be set to #{enabled_value}" do
+        expect {
+          subject[:enabled] = enabled_value
+        }.not_to raise_error
+      end
+    end
+
+    it 'cannot be set to an empty string' do
+      expect {
+        subject[:ensure] = ''
+      }.to raise_error(Puppet::Error, %r{Invalid value})
+    end
+
+    it 'cannot be set to nil' do
+      expect {
+        subject[:ensure] = nil
+      }.to raise_error(Puppet::Error, %r{Got nil value for ensure})
     end
   end
 
   describe 'property :products' do
     it 'is a property' do
-      expect(described_class.attrtype(:ensure)).to eq(:property)
+      expect(described_class.attrtype(:products)).to eq(:property)
     end
 
     it 'has documentation' do
-      expect(described_class.attrclass(:name).doc).not_to eq("\n\n")
+      expect(described_class.attrclass(:products).doc).not_to eq("\n\n")
     end
 
   end
