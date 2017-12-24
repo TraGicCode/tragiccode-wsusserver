@@ -74,6 +74,12 @@ describe Puppet::Type.type(:wsusserver_approvalrule) do
         subject[:ensure] = ''
       }.to raise_error(Puppet::Error, %r{Invalid value})
     end
+
+    it 'cannot be set to nil' do
+      expect {
+        subject[:ensure] = nil
+      }.to raise_error(Puppet::Error, %r{Got nil value for ensure})
+    end
   end
 
   describe 'property :rule_id' do
