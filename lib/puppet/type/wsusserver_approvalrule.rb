@@ -70,7 +70,6 @@ Puppet::Type.newtype(:wsusserver_approvalrule) do
   newproperty(:products, :array_matching => :all) do
       desc 'Specifies the products in which this rule should apply to.'
       validate do |value|
-        # Each element in the array of it was an array that was even passed in
         fail('Products for an approval rule must be a non-empty string.') if value.empty? || value.nil?
       end
   end

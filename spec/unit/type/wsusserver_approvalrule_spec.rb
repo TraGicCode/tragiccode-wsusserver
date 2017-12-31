@@ -153,6 +153,30 @@ describe Puppet::Type.type(:wsusserver_approvalrule) do
     it 'has documentation' do
       expect(described_class.attrclass(:products).doc).not_to eq("\n\n")
     end
+    
+    # it 'cannot contain an integer in the products' do
+    #   expect {
+    #     subject[:products] = [1]
+    #   }.to raise_error(Puppet::Error, %r{Invalid value})
+    # end
+
+    # it 'cannot be set to a float' do
+    #   expect {
+    #     subject[:products] = 1.0
+    #   }.to raise_error(Puppet::Error, %r{Invalid value})
+    # end
+
+    # it 'cannot be set to an empty string' do
+    #   expect {
+    #     subject[:products] = ''
+    #   }.to raise_error(Puppet::Error, %r{Invalid value})
+    # end
+
+    # it 'cannot be set to nil' do
+    #   expect {
+    #     subject[:products] = nil
+    #   }.to raise_error(Puppet::Error, %r{Got nil value for enabled})
+    # end
 
   end
 end
