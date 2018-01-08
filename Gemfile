@@ -14,6 +14,7 @@ gem 'puppet-blacksmith'
 gem 'beaker'
 gem 'beaker-puppet_install_helper'
 gem 'beaker-module_install_helper'
+gem 'beaker-testmode_switcher'
 gem 'beaker-rspec'
 gem 'serverspec'
 
