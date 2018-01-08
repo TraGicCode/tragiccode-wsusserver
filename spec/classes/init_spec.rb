@@ -36,5 +36,6 @@ describe 'wsusserver' do
     }) }
 
     it { should contain_class('wsusserver::config').that_requires('Class[wsusserver::install]').that_comes_before('Class[wsusserver::service]') }
+    it { should contain_class('wsusserver::built_in_computer_target_groups').that_requires('Class[wsusserver::install]') }
   end
 end
