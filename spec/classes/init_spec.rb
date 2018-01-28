@@ -38,5 +38,6 @@ describe 'wsusserver' do
     }
 
     it { is_expected.to contain_class('wsusserver::config').that_requires('Class[wsusserver::install]').that_comes_before('Class[wsusserver::service]') }
+    it { is_expected.to contain_class('wsusserver::built_in_computer_target_groups').that_requires('Class[wsusserver::install]') }
   end
 end

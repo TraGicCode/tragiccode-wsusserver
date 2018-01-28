@@ -187,7 +187,7 @@ class { 'wsusserver':
 Typically you group servers into groups so that you can role out changes in a controlled fashion or in a certain way.  Below shows how to create computer target groups in order to do this.
 
 ```puppet
-wsusserver::computertargetgroup { ['Development', 'Staging', 'Production']:
+wsusserver_computer_target_group { ['Development', 'Staging', 'Production']:
     ensure => 'present',
 }
 ```
@@ -197,10 +197,12 @@ wsusserver::computertargetgroup { ['Development', 'Staging', 'Production']:
 Removing is just as simple as creating is.
 
 ```puppet
-wsusserver::computertargetgroup { ['Development', 'Staging', 'Production']:
+wsusserver_computer_target_group { ['Development', 'Staging', 'Production']:
     ensure => 'absent',
 }
 ```
+
+**NOTE: By Default, wsuserver has 2 built-in computer groups created.  They are named 'All Computers' and 'Unassigned Computers'.  The wsusserver base/main class declares these for you and therefore you don't need to create these in order to have these resources show up in your puppet reports as being present.  Also because these built-in groups cannot be deleted, since wsusserver will not allow it, if you plan on doing any sort of purging of unmanaged computer target groups just make sure the main class is in the catalog so the purging will not fail trying to delete the above 2 built-in computer target groups.**
 
 ### Removing automatic approval rules
 
@@ -378,6 +380,26 @@ Default: true.
 
 **NOTE: When you perform post-installation configuration tasks in the wsus wizard, this is the part at the end that has a check box asking if you want to begin initial synchronization.**
 
+### Types
+
+Parameters are optional unless otherwise noted.
+
+#### `wsusserver_computer_target_group`
+
+Installs, configures, and manages WSUS computer target groups.
+
+##### `name`
+
+Specifies a computer target group to manage. Valid options: a string containing the name of your computer target group.
+
+Default: the title of your declared resource.
+
+##### `ensure`
+
+Specifies whether the computer target group should be present. Valid options: 'present' and 'absent'.
+
+Default: 'present'.
+
 ### Defined Types
 
 Parameters are optional unless otherwise noted.
@@ -421,22 +443,6 @@ Specifies which products this approval rule should apply to.
 *Required.*
 
 Specifies which classifications this approval rule should apply to.
-
-#### `wsusserver::computertargetgroup`
-
-Installs, configures, and manages WSUS computer target groups.
-
-##### `group_name`
-
-Specifies a computer target group to manage. Valid options: a string containing the name of your computer target group.
-
-Default: the title of your declared resource.
-
-##### `ensure`
-
-Specifies whether the computer target group should be present. Valid options: 'present' and 'absent'.
-
-Default: 'present'.
 
 ## Development
 

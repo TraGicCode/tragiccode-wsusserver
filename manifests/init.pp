@@ -51,7 +51,12 @@ class wsusserver(
     service_enable => $service_enable,
   }
 
+  include wsusserver::built_in_computer_target_groups
+
   Class['wsusserver::install']
   -> Class['wsusserver::config']
   -> Class['wsusserver::service']
+
+  Class['wsusserver::install']
+  -> Class['wsusserver::built_in_computer_target_groups']
 }
