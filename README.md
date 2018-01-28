@@ -1,5 +1,7 @@
 # WSUSServer
 
+[![Puppet Forge](http://img.shields.io/puppetforge/v/tragiccode/wsusserver.svg)](https://forge.puppetlabs.com/tragiccode/wsusserver)
+
 #### Table of Contents
 
 1. [Description](#description)
