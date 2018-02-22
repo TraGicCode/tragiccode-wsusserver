@@ -411,6 +411,98 @@ Default: true.
 
 **NOTE: When you perform post-installation configuration tasks in the wsus wizard, this is the part at the end that has a check box asking if you want to begin initial synchronization.**
 
+#### `send_sync_notification`
+
+Specifies that notifications should be sent when new updates are synchronized. Valid options: true, false
+
+Default: false
+
+**NOTE: if set to `true` you must also specify sync_notification_recipient(s) and smtp server details**
+
+#### `sync_notification_recipients`   
+
+Specifies the recipients of sync notification emails. Accepts an arrays of addresses, e.g. ['notifications@mydomain.com', 'another@mydomain.com']
+
+Default: ['']
+
+#### `send_status_notification`
+
+Specifies that status reports. should be sent. Valid options: true, false
+
+Default: false
+
+**NOTE: if set to `true` you must also specify status_notification_recipient(s) and smtp server details**
+
+#### `status_notification_recipients`
+
+Specifies the recipients of status notification (reports) emails. Accepts an arrays of addresses, e.g. ['notifications@mydomain.com', 'another@mydomain.com']
+
+Default: ['']
+
+#### `notification_frequency`
+
+Specifies frequency of status report notifications. Valid options: Weekly, Daily (note case)
+
+Default: Weekly
+
+#### `notification_time_of_day`
+
+Specifies time of day of status report notifications. In UTC time.
+
+Default: '03:00:00', # 3AM ( UTC ) 24H Clock
+
+#### `smtp_hostname`
+
+Specifies the hostname of the smtp server. Example: 'smtp.mydomain.com'
+
+Default: ''
+**Required if notifications enabled**
+
+#### `smtp_sender_displayname`
+
+Specifies the display name of the sender of the notification email. Valid options: text string
+
+Default: ''
+
+#### `smtp_sender_emailaddress`
+
+Specifies the email address of the sender of the notification email. Valid options: Email Address. Example: 'wsusserver@mydomain.com'
+**Required if notifications enabled**
+
+#### `smtp_port`
+
+Specifies the port the smtp server accepts SMTP messages on. Valid options: integer number
+
+Default: 25
+
+#### `smtp_requires_authentication`
+
+***Functionality not yet implemented***
+
+Specifies that the SMTP server requires anthenticiation to send messages. Valid options: true, false
+
+Default: false
+
+#### `smtp_username`
+
+***Functionality not yet implemented***
+
+Specifies username to use for SMTP server authentication
+
+Default: ''
+
+**Required if `smtp_requires_authentication` is true**
+
+#### `smtp_password`
+
+***Functionality not yet implemented***
+
+Specifies password to use for SMTP server authentication
+
+Default: ''
+
+**Required if `smtp_requires_authentication` is true**
+
 ### Types
 
 Parameters are optional unless otherwise noted.
