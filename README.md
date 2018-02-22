@@ -184,6 +184,35 @@ class { 'wsusserver':
 
 **NOTE: The list of products, classifications, and languages for microsoft is constantly changing and currently i'm unable to find an updated list of where these can be found.  The best solution at the moment is to open wsusserver, Go to Options => Products and Classifications and picking a name of the product based on the tree view shown.**
 
+### Configuring email notifications
+
+To configure sync and/or status report email notifications the `smtp_hostname` and `smtp_sender_emailaddress` must be configured
+```puppet
+class { 'wsusserver':
+    ....
+    # Update synchronized email notification settings
+    send_sync_notification         => true,  
+    sync_notification_recipients   => ['notifications@mydomain.com', 'another@mydomain.com'],
+
+    #Status report email notification settings
+    send_status_notification       => true,  
+    status_notification_recipients => ['notifications@mydomain.com'],
+    notification_frequency         => 'Weekly',   # 'Weekly' or 'Daily' 
+    notification_time_of_day       => '03:00:00', # 3AM ( UTC ) 24H Clock
+
+    #SMTP Server Settings
+    smtp_hostname                  => 'smtp.mydomain.com',
+    smtp_sender_displayname        => 'WSUS Server Notifications',
+    smtp_sender_emailaddress       => 'wsusserver@mydomain.com',
+    ##Optional settings
+    smtp_port                      => 25,    
+    ##Not yet implemented settings
+    smtp_requires_authentication   => false,
+    smtp_username                  => '',
+    smtp_password                  => '',
+  }
+```
+
 ### Creating computer target groups
 
 Typically you group servers into groups so that you can role out changes in a controlled fashion or in a certain way.  Below shows how to create computer target groups in order to do this.
