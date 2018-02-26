@@ -50,43 +50,6 @@ class wsusserver::config(
       provider  => 'powershell',
     }
 
-    # Sync Notification Settings
-    exec { 'wsus-config-sync-notification-settings':
-      #Set sync to true or false
-      command   => "\$ErrorActionPreference = \"Stop\"
-                    \$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
-                    \$wsusEmailNotificationConfiguration.SendSyncNotification = \$${send_sync_notification}
-                    \$wsusEmailNotificationConfiguration.Save()
-                    return 'SendSyncNotification setting updated'
-                   ",
-      unless    => "\$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
-                    if (\$wsusEmailNotificationConfiguration.SendSyncNotification -eq \$${send_sync_notification}) {
-                      Exit 0
-                    }
-                    Exit 1",
-      logoutput => true,
-      provider  => 'powershell',
-    }
-
-
-    # Status Report Notification Settings
-    exec { 'wsus-config-status-report-notification-settings':
-      #Set sync to true or false
-      command   => "\$ErrorActionPreference = \"Stop\"
-                    \$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
-                    \$wsusEmailNotificationConfiguration.SendStatusNotification = \$${send_status_notification}
-                    \$wsusEmailNotificationConfiguration.Save()
-                    return 'SendStatusNotification setting updated'
-                   ",
-      unless    => "\$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
-                    if (\$wsusEmailNotificationConfiguration.SendStatusNotification -eq \$${send_status_notification}) {
-                      Exit 0
-                    }
-                    Exit 1",
-      logoutput => true,
-      provider  => 'powershell',
-    }
-
 
     if ($send_sync_notification or $send_status_notification) {
       # Ensure SMTP Hostname is set if needed
@@ -149,6 +112,43 @@ class wsusserver::config(
         provider  => 'powershell',
       }
 
+    }
+
+    # Sync Notification Settings
+    exec { 'wsus-config-sync-notification-settings':
+      #Set sync to true or false
+      command   => "\$ErrorActionPreference = \"Stop\"
+                    \$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                    \$wsusEmailNotificationConfiguration.SendSyncNotification = \$${send_sync_notification}
+                    \$wsusEmailNotificationConfiguration.Save()
+                    return 'SendSyncNotification setting updated'
+                   ",
+      unless    => "\$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                    if (\$wsusEmailNotificationConfiguration.SendSyncNotification -eq \$${send_sync_notification}) {
+                      Exit 0
+                    }
+                    Exit 1",
+      logoutput => true,
+      provider  => 'powershell',
+    }
+
+
+    # Status Report Notification Settings
+    exec { 'wsus-config-status-report-notification-settings':
+      #Set sync to true or false
+      command   => "\$ErrorActionPreference = \"Stop\"
+                    \$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                    \$wsusEmailNotificationConfiguration.SendStatusNotification = \$${send_status_notification}
+                    \$wsusEmailNotificationConfiguration.Save()
+                    return 'SendStatusNotification setting updated'
+                   ",
+      unless    => "\$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                    if (\$wsusEmailNotificationConfiguration.SendStatusNotification -eq \$${send_status_notification}) {
+                      Exit 0
+                    }
+                    Exit 1",
+      logoutput => true,
+      provider  => 'powershell',
     }
 
 
