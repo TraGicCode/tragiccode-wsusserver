@@ -115,11 +115,18 @@ class wsusserver::config(
     }
 
     # Sync Notification Settings
+    $sync_recipients = join($sync_notification_recipients, ', ')
     exec { 'wsus-config-sync-notification-settings':
       #Set sync to true or false
       command   => "\$ErrorActionPreference = \"Stop\"
                     \$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
                     \$wsusEmailNotificationConfiguration.SendSyncNotification = \$${send_sync_notification}
+                    #Clear recipient list
+                    \$wsusEmailNotificationConfiguration.SyncNotificationRecipients.Clear()
+                    #Add all recipients
+                    foreach (\$recip in \"${sync_recipients}\".split(',')) {
+                       \$wsusEmailNotificationConfiguration.SyncNotificationRecipients.Add(\$recip)
+                    }
                     \$wsusEmailNotificationConfiguration.Save()
                     return 'SendSyncNotification setting updated'
                    ",
@@ -134,11 +141,18 @@ class wsusserver::config(
 
 
     # Status Report Notification Settings
+    $status_recipients = join($status_notification_recipients, ', ')
     exec { 'wsus-config-status-report-notification-settings':
       #Set sync to true or false
       command   => "\$ErrorActionPreference = \"Stop\"
                     \$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
                     \$wsusEmailNotificationConfiguration.SendStatusNotification = \$${send_status_notification}
+                    #Clear recipient list
+                    \$wsusEmailNotificationConfiguration.StatusNotificationRecipients.Clear()
+                    #Add all recipients
+                    foreach (\$recip in \"${status_recipients}\".split(',')) {
+                       \$wsusEmailNotificationConfiguration.StatusNotificationRecipients.Add(\$recip)
+                    }
                     \$wsusEmailNotificationConfiguration.Save()
                     return 'SendStatusNotification setting updated'
                    ",
@@ -153,7 +167,6 @@ class wsusserver::config(
 
 
     # Sync Notification Recipients
-    $sync_recipients = join($sync_notification_recipients, ', ')
     exec { 'wsus-config-sync-notification-recipients':
       #Set recip to correct list
       command   => "\$ErrorActionPreference = \"Stop\"
@@ -186,7 +199,6 @@ class wsusserver::config(
 
     if ($send_status_notification) {
       # Status Report Notification Recipients
-      $status_recipients = join($status_notification_recipients, ', ')
       exec { 'wsus-config-status-notification-recipients':
         #Set recip to correct list
         command   => "\$ErrorActionPreference = \"Stop\"
