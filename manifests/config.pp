@@ -128,7 +128,6 @@ class wsusserver::config(
                        \$wsusEmailNotificationConfiguration.SyncNotificationRecipients.Add(\$recip)
                     }
                     \$wsusEmailNotificationConfiguration.Save()
-                    return 'SendSyncNotification setting updated'
                    ",
       unless    => "\$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
                     if (\$wsusEmailNotificationConfiguration.SendSyncNotification -eq \$${send_sync_notification}) {
@@ -154,7 +153,6 @@ class wsusserver::config(
                        \$wsusEmailNotificationConfiguration.StatusNotificationRecipients.Add(\$recip)
                     }
                     \$wsusEmailNotificationConfiguration.Save()
-                    return 'SendStatusNotification setting updated'
                    ",
       unless    => "\$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
                     if (\$wsusEmailNotificationConfiguration.SendStatusNotification -eq \$${send_status_notification}) {
