@@ -1,6 +1,12 @@
 version: 1.0.{build}-{branch}
 os: Windows Server 2012 R2
 
+# Only build on PR and master branch to avoid me pushing
+# and causing a double build
+branches:
+  only:
+  - master
+
 install:
   - set PATH=C:\Ruby22\bin;%PATH%
   - bundle install --path .bundle
