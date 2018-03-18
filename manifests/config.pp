@@ -16,6 +16,20 @@ class wsusserver::config(
   String $synchronize_time_of_day                    = $wsusserver::params::synchronize_time_of_day,
   Integer $number_of_synchronizations_per_day        = $wsusserver::params::number_of_synchronizations_per_day,
   Boolean $trigger_full_synchronization_post_install = $wsusserver::params::trigger_full_synchronization_post_install,
+  Boolean $send_sync_notification                    = $wsusserver::params::send_sync_notification,
+  Array[String, 1] $sync_notification_recipients     = $wsusserver::params::sync_notification_recipients,
+  Boolean $send_status_notification                  = $wsusserver::params::send_status_notification,
+  Array[String, 1] $status_notification_recipients   = $wsusserver::params::status_notification_recipients,
+  Enum['Weekly', 'Daily'] $notification_frequency    = $wsusserver::params::notification_frequency,
+  String $notification_time_of_day                   = $wsusserver::params::notification_time_of_day,
+  String $smtp_hostname                              = $wsusserver::params::smtp_hostname,
+  Integer $smtp_port                                 = $wsusserver::params::smtp_port,
+  Boolean $smtp_requires_authentication              = $wsusserver::params::smtp_requires_authentication,
+  String $smtp_username                              = $wsusserver::params::smtp_username,
+  String $smtp_password                              = $wsusserver::params::smtp_password,
+  String $smtp_sender_displayname                    = $wsusserver::params::smtp_sender_displayname,
+  String $smtp_sender_emailaddress                   = $wsusserver::params::smtp_sender_emailaddress,
+  String $email_language                             = $wsusserver::params::email_language,
 ) inherits wsusserver::params {
 
     exec { 'wsus-config-update-join-improvement-program':
@@ -34,6 +48,215 @@ class wsusserver::config(
                     Exit 1",
       logoutput => true,
       provider  => 'powershell',
+    }
+
+
+    if ($send_sync_notification or $send_status_notification) {
+      # Ensure SMTP Hostname is set if needed
+      if ($smtp_hostname == undef or empty($smtp_hostname)) {
+        fail('must define smtp_hostname to send sync or status notifications')
+      }
+      # Alter smtp_hostname if needed
+      exec { 'wsus-config-set-smtp-hostname':
+        command   => "\$ErrorActionPreference = \"Stop\"
+                      \$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                      write-output \"Setting SmtpHostname to ${smtp_hostname}\"
+                      \$wsusEmailNotificationConfiguration.SmtpHostName = \"${smtp_hostname}\"
+                      \$wsusEmailNotificationConfiguration.Save()
+                     ",
+        unless    => "\$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                      if (\$wsusEmailNotificationConfiguration.SmtpHostName -eq \"${smtp_hostname}\") {
+                        Exit 0
+                      }
+                      Exit 1",
+        logoutput => true,
+        provider  => 'powershell',
+      }
+      # Alter sender information if needed
+      exec { 'wsus-config-set-smtp-sender-info':
+        command   => "\$ErrorActionPreference = \"Stop\"
+                      \$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                      write-output \"Setting SenderDisplayName to ${smtp_sender_displayname}\"
+                      \$wsusEmailNotificationConfiguration.SenderDisplayName = \"${smtp_sender_displayname}\"
+                      write-output \"Setting SenderEmailAddress to ${smtp_sender_emailaddress}\"
+                      \$wsusEmailNotificationConfiguration.SenderEmailAddress = \"${smtp_sender_emailaddress}\"
+                      \$wsusEmailNotificationConfiguration.Save()
+                     ",
+        unless    => "\$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                      if ((\$wsusEmailNotificationConfiguration.SenderDisplayName -eq \"${smtp_sender_displayname}\") -and (\$wsusEmailNotificationConfiguration.SenderEmailAddress.toString() -eq \"${smtp_sender_emailaddress}\")) {
+                        Exit 0
+                      }
+                      Exit 1",
+        logoutput => true,
+        provider  => 'powershell',
+      }
+      #Update EmailLanguage if needed
+      # Default to english 
+      if ($email_language == undef or empty($email_language)) {
+        $email_language = 'en'
+      }
+
+      exec { 'wsus-config-set-email-language':
+        command   => "\$ErrorActionPreference = \"Stop\"
+                      \$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                      write-output \"Setting EmailLanguage to ${email_language}\"
+                      \$wsusEmailNotificationConfiguration.EmailLanguage = \"${email_language}\"
+                      \$wsusEmailNotificationConfiguration.Save()
+                     ",
+        unless    => "\$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                      if (\$wsusEmailNotificationConfiguration.EmailLanguage -eq \"${email_language}\") {
+                        Exit 0
+                      }
+                      Exit 1",
+        logoutput => true,
+        provider  => 'powershell',
+      }
+
+    }
+
+    # Sync Notification Settings
+    $sync_recipients = join($sync_notification_recipients, ', ')
+    exec { 'wsus-config-sync-notification-settings':
+      #Set sync to true or false
+      command   => "\$ErrorActionPreference = \"Stop\"
+                    \$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                    \$wsusEmailNotificationConfiguration.SendSyncNotification = \$${send_sync_notification}
+                    #Clear recipient list
+                    \$wsusEmailNotificationConfiguration.SyncNotificationRecipients.Clear()
+                    #Add all recipients
+                    foreach (\$recip in \"${sync_recipients}\".split(',')) {
+                       \$wsusEmailNotificationConfiguration.SyncNotificationRecipients.Add(\$recip)
+                    }
+                    \$wsusEmailNotificationConfiguration.Save()
+                   ",
+      unless    => "\$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                    if (\$wsusEmailNotificationConfiguration.SendSyncNotification -eq \$${send_sync_notification}) {
+                      Exit 0
+                    }
+                    Exit 1",
+      logoutput => true,
+      provider  => 'powershell',
+    }
+
+
+    # Status Report Notification Settings
+    $status_recipients = join($status_notification_recipients, ', ')
+    exec { 'wsus-config-status-report-notification-settings':
+      #Set sync to true or false
+      command   => "\$ErrorActionPreference = \"Stop\"
+                    \$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                    \$wsusEmailNotificationConfiguration.SendStatusNotification = \$${send_status_notification}
+                    #Clear recipient list
+                    \$wsusEmailNotificationConfiguration.StatusNotificationRecipients.Clear()
+                    #Add all recipients
+                    foreach (\$recip in \"${status_recipients}\".split(',')) {
+                       \$wsusEmailNotificationConfiguration.StatusNotificationRecipients.Add(\$recip)
+                    }
+                    \$wsusEmailNotificationConfiguration.Save()
+                   ",
+      unless    => "\$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                    if (\$wsusEmailNotificationConfiguration.SendStatusNotification -eq \$${send_status_notification}) {
+                      Exit 0
+                    }
+                    Exit 1",
+      logoutput => true,
+      provider  => 'powershell',
+    }
+
+
+    # Sync Notification Recipients
+    exec { 'wsus-config-sync-notification-recipients':
+      #Set recip to correct list
+      command   => "\$ErrorActionPreference = \"Stop\"
+                    \$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                    \$wsusEmailRecipients = \$wsusEmailNotificationConfiguration.SyncNotificationRecipients.toString() 
+                    write-output \"Updating recipients from: \$wsusEmailRecipients to: ${sync_recipients}\"
+                    #Clear recipient list
+                    \$wsusEmailNotificationConfiguration.SyncNotificationRecipients.Clear()
+                    #Add all recipients
+                    foreach (\$recip in \"${sync_recipients}\".split(',')) {
+                       \$wsusEmailNotificationConfiguration.SyncNotificationRecipients.Add(\$recip)
+                    }
+                    #Save
+                    \$wsusEmailNotificationConfiguration.Save()
+                   ",
+      unless    => "\$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                    \$wsusEmailSyncNotificationRecipients = \$wsusEmailNotificationConfiguration.SyncNotificationRecipients.toString()
+                    if (\$wsusEmailNotificationConfiguration.SendSyncNotification -eq \$false) {
+                      #Can't change recipients if sendsyncnotification is false
+                      Exit 0
+                    }
+                    if (\$wsusEmailSyncNotificationRecipients -eq \"${sync_recipients}\") {
+                      #Recipient list is correct
+                      Exit 0
+                    }
+                    Exit 1",
+      logoutput => true,
+      provider  => 'powershell',
+    }
+
+    if ($send_status_notification) {
+      # Status Report Notification Recipients
+      exec { 'wsus-config-status-notification-recipients':
+        #Set recip to correct list
+        command   => "\$ErrorActionPreference = \"Stop\"
+                      \$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                      \$wsusEmailRecipients = \$wsusEmailNotificationConfiguration.StatusNotificationRecipients.toString() 
+                      write-output \"Updating recipients from: \$wsusEmailRecipients to: ${status_recipients}\"
+                      #Clear recipient list
+                      \$wsusEmailNotificationConfiguration.StatusNotificationRecipients.Clear()
+                      #Add all recipients
+                      foreach (\$recip in \"${status_recipients}\".split(',')) {
+                         \$wsusEmailNotificationConfiguration.StatusNotificationRecipients.Add(\$recip)
+                      }
+                      #Save
+                      \$wsusEmailNotificationConfiguration.Save()
+                     ",
+        unless    => "\$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                      \$wsusEmailStatusNotificationRecipients = \$wsusEmailNotificationConfiguration.StatusNotificationRecipients.toString()
+                      if (\$wsusEmailStatusNotificationRecipients -eq \"${status_recipients}\") {
+                        #Recipient list is correct
+                        Exit 0
+                      }
+                      Exit 1",
+        logoutput => true,
+        provider  => 'powershell',
+      }
+
+      # Status Report Notification Frequency
+      exec { 'wsus-config-status-report-frequency':
+        command   => "\$ErrorActionPreference = \"Stop\"
+                      \$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                      write-output \"Setting StatusNotificationFrequency to ${notification_frequency}\"
+                      \$wsusEmailNotificationConfiguration.StatusNotificationFrequency = \"${notification_frequency}\"
+                      \$wsusEmailNotificationConfiguration.Save()
+                     ",
+        unless    => "\$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                      if (\$wsusEmailNotificationConfiguration.StatusNotificationFrequency -eq \"${notification_frequency}\") {
+                        Exit 0
+                      }
+                      Exit 1",
+        logoutput => true,
+        provider  => 'powershell',
+      }
+
+      # Status Report Notification TimeofDay
+      exec { 'wsus-config-status-report-timeofday':
+        command   => "\$ErrorActionPreference = \"Stop\"
+                      \$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                      write-output \"Setting StatusNotificationTimeOfDay to ${notification_time_of_day}\"
+                      \$wsusEmailNotificationConfiguration.StatusNotificationTimeOfDay = \"${notification_time_of_day}\"
+                      \$wsusEmailNotificationConfiguration.Save()
+                     ",
+        unless    => "\$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                      if (\$wsusEmailNotificationConfiguration.StatusNotificationTimeOfDay -eq \"${notification_time_of_day}\") {
+                        Exit 0
+                      }
+                      Exit 1",
+        logoutput => true,
+        provider  => 'powershell',
+      }
+
     }
 
     # TODO: Implement idempotence check for upstream server.  currently i just execute this is sync from microsoft

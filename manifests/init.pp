@@ -19,6 +19,20 @@ class wsusserver(
   Boolean $synchronize_automatically                 = $wsusserver::params::synchronize_automatically,
   String $synchronize_time_of_day                    = $wsusserver::params::synchronize_time_of_day,
   Integer $number_of_synchronizations_per_day        = $wsusserver::params::number_of_synchronizations_per_day,
+  Boolean $send_sync_notification                    = $wsusserver::params::send_sync_notification,
+  Array[String, 1] $sync_notification_recipients     = $wsusserver::params::sync_notification_recipients,
+  Boolean $send_status_notification                  = $wsusserver::params::send_status_notification,
+  Array[String, 1] $status_notification_recipients   = $wsusserver::params::status_notification_recipients,
+  Enum['Weekly', 'Daily'] $notification_frequency    = $wsusserver::params::notification_frequency,
+  String $notification_time_of_day                   = $wsusserver::params::notification_time_of_day,
+  String $smtp_hostname                              = $wsusserver::params::smtp_hostname,
+  Integer $smtp_port                                 = $wsusserver::params::smtp_port,
+  Boolean $smtp_requires_authentication              = $wsusserver::params::smtp_requires_authentication,
+  String $smtp_username                              = $wsusserver::params::smtp_username,
+  String $smtp_password                              = $wsusserver::params::smtp_password,
+  String $smtp_sender_displayname                    = $wsusserver::params::smtp_sender_displayname,
+  String $smtp_sender_emailaddress                   = $wsusserver::params::smtp_sender_emailaddress,
+  String $email_language                             = $wsusserver::params::email_language,
 ) inherits wsusserver::params {
 
   class { 'wsusserver::install':
@@ -43,6 +57,20 @@ class wsusserver(
     synchronize_time_of_day                   => $synchronize_time_of_day,
     number_of_synchronizations_per_day        => $number_of_synchronizations_per_day,
     trigger_full_synchronization_post_install => $trigger_full_synchronization_post_install,
+    send_sync_notification                    => $send_sync_notification,
+    sync_notification_recipients              => $sync_notification_recipients,
+    send_status_notification                  => $send_status_notification,
+    status_notification_recipients            => $status_notification_recipients,
+    notification_frequency                    => $notification_frequency,
+    notification_time_of_day                  => $notification_time_of_day,
+    smtp_hostname                             => $smtp_hostname,
+    smtp_port                                 => $smtp_port,
+    smtp_requires_authentication              => $smtp_requires_authentication,
+    smtp_username                             => $smtp_username,
+    smtp_password                             => $smtp_password,
+    smtp_sender_displayname                   => $smtp_sender_displayname,
+    smtp_sender_emailaddress                  => $smtp_sender_emailaddress,
+    email_language                            => $email_language,
   }
 
   class { 'wsusserver::service':

@@ -21,4 +21,18 @@ class wsusserver::params {
     $synchronize_automatically = true
     $synchronize_time_of_day = '03:00:00' # midnight each day!
     $number_of_synchronizations_per_day = 1
+    $send_sync_notification = false
+    $sync_notification_recipients = ['']
+    $send_status_notification = false
+    $status_notification_recipients = ['']
+    $notification_frequency = 'Weekly'
+    $notification_time_of_day = '03:00:00'
+    $smtp_hostname = ''
+    $smtp_port = 25
+    $smtp_requires_authentication = false
+    $smtp_username = ''
+    $smtp_password = ''
+    $smtp_sender_displayname = ''
+    $smtp_sender_emailaddress = ''
+    $email_language = 'en'
 }
