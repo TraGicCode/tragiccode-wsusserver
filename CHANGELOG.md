@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 This project follows semver to help clients understand the impact of updates/changes.  Find out more at http://semver.org.
 
+## [v1.1.0](https://github.com/TraGicCode/tragiccode-wsusserver/tree/v1.1.0) (2018-03-18)
+[Full Changelog](https://github.com/TraGicCode/tragiccode-wsusserver/compare/v1.0.0...v1.1.0)
+
+**Closed issues:**
+
+- Ability to configure email notifications [\#8](https://github.com/TraGicCode/tragiccode-wsusserver/issues/8)
+- Add puppet forge badge to README.md [\#5](https://github.com/TraGicCode/tragiccode-wsusserver/issues/5)
+
+**Merged pull requests:**
+
+- PR Template: Added PR Template [\#12](https://github.com/TraGicCode/tragiccode-wsusserver/pull/12) ([TraGicCode](https://github.com/TraGicCode))
+- Feature/configure email notifications [\#10](https://github.com/TraGicCode/tragiccode-wsusserver/pull/10) ([jblance](https://github.com/jblance))
+- Added shields.io puppetforge badge. [\#6](https://github.com/TraGicCode/tragiccode-wsusserver/pull/6) ([TraGicCode](https://github.com/TraGicCode))
+
 ## [v1.0.0](https://github.com/TraGicCode/tragiccode-wsusserver/tree/v1.0.0) (2018-01-08)
 [Full Changelog](https://github.com/TraGicCode/tragiccode-wsusserver/compare/v0.1.0...v1.0.0)
 
