@@ -1,0 +1,32 @@
+{
+  "puppet_task_version": 1,
+  "supports_noop": false,
+  "description": "Perform a WSUS Server Cleanup.",
+  "input_method": "powershell",
+  "parameters": {
+    "cleanupobsoletecomputers": {
+      "description": "Deletes obsolete computers from the database.",
+      "type": "Boolean"
+    },
+    "cleanupobsoleteupdates": {
+      "description": "Deletes obsolete updates from the database.",
+      "type": "Boolean"
+    },
+    "cleanupunneededcontentfiles": {
+      "description": "Deletes unneeded update files.",
+      "type": "Boolean"
+    },
+    "compressupdates": {
+      "description": "Deletes obsolete revisions to updates from the database.",
+      "type": "Boolean"
+    },
+    "declineexpiredupdates": {
+      "description": "Declines expired updates.",
+      "type": "Boolean"
+    },
+    "declinesupersededupdates": {
+      "description": "Declines superseded updates..",
+      "type": "Boolean"
+    }
+  }
+}
