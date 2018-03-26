@@ -33,6 +33,8 @@ describe 'wsusserver' do
       :synchronize_time_of_day                   => '03:00:00',
       :number_of_synchronizations_per_day        => 1,
       :trigger_full_synchronization_post_install => true,
+      :use_proxy                                 => false,
+      :proxy_settings                            => {},
     }) }
 
     it { should contain_class('wsusserver::config').that_requires('Class[wsusserver::install]').that_comes_before('Class[wsusserver::service]') }

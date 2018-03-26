@@ -14,6 +14,19 @@ class wsusserver::params {
     $upstream_wsus_server_name = ''
     $upstream_wsus_server_port = 80
     $upstream_wsus_server_use_ssl = false
+    $use_proxy = false
+    $proxy_settings = {}
+    $proxy_settings_defaults = {
+      server_name                    => undef,
+      server_port                    => 80,
+      use_credentials                => false,
+      allow_credentials_over_non_ssl => true,
+      credentials                    => {
+          username                   => undef,
+          password                   => undef,
+          domain                     => undef,
+      }
+    }
     $update_languages = ['en']
     $targeting_mode = 'Client'
     $classifications = '*'

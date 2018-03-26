@@ -10,6 +10,8 @@ class wsusserver::config(
   Optional[String] $upstream_wsus_server_name        = $wsusserver::params::upstream_wsus_server_name,
   Integer $upstream_wsus_server_port                 = $wsusserver::params::upstream_wsus_server_port,
   Boolean $upstream_wsus_server_use_ssl              = $wsusserver::params::upstream_wsus_server_use_ssl,
+  Boolean $use_proxy                                 = $wsusserver::params::use_proxy,
+  Hash $proxy_settings                               = $wsusserver::params::proxy_settings,
   Enum['Server', 'Client'] $targeting_mode           = $wsusserver::params::targeting_mode,
   Boolean $host_binaries_on_microsoft_update         = $wsusserver::params::host_binaries_on_microsoft_update,
   Boolean $synchronize_automatically                 = $wsusserver::params::synchronize_automatically,
@@ -284,6 +286,20 @@ class wsusserver::config(
       logoutput => true,
       provider  => 'powershell',
     }
+
+    $_proxy_settings = merge($wsusserver::params::proxy_settings_defaults, $proxy_settings)
+
+    exec { 'wsus-config-proxy-settings':
+      command   => "",
+      unless    => "\$wsusConfiguration = (Get-WsusServer).GetConfiguration()
+                    if (\$wsusConfiguration.UseProxy -eq \$${use_proxy}) {
+                      Exit 0
+                    }
+                    Exit 1",
+      logoutput => true,
+      provider  => 'powershell',
+    }
+
     # TODO: 
     # 1.) handle * for all languages instead of having to explicitly list them out
     # 2.) handle better idempotence just in case someone makes a change on the server in the ui? ( all languages )  
