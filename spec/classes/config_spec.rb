@@ -48,7 +48,7 @@ describe 'wsusserver::config' do
                     if ($wsusConfiguration.ProxyName -ne $false) {
                       Exit 1
                     }
-                    if (\$wsusConfiguration.ProxyServerPort -ne 80) {
+                    if ($wsusConfiguration.ProxyServerPort -ne 80) {
                       Exit 1
                     }
                     Exit 0',
