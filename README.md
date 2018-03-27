@@ -191,13 +191,13 @@ To configure WSUS to use an anonymous proxy
 class {'wsusserver':
     ....
     #Use Proxy
-    use_proxy => true,
+    use_proxy      => true,
 
     #Proxy Settings
     proxy_settings => {
-        server_name => 'proxy.mydomain.com',
-	server_port => 80,
-	use_credentials => false,
+        server_name                    => 'proxy.mydomain.com',
+	server_port                    => 80,
+	use_credentials                => false,
 	allow_credentials_over_non_ssl => true,
     }
 }
@@ -207,13 +207,13 @@ To use a proxy that requires credentials
 class {'wsusserver':
     ....
     #Use Proxy
-    use_proxy => true,
+    use_proxy       => true,
 
     #Proxy Settings
-    proxy_settings => {
-        server_name => 'proxy.mydomain.com',
-	server_port => 80,
-	use_credentials => true,
+    proxy_settings  => {
+        server_name                    => 'proxy.mydomain.com',
+	server_port                    => 80,
+	use_credentials                => true,
 	allow_credentials_over_non_ssl => true,
 	credentials => {
 	    domain   => 'mydomain',
