@@ -40,7 +40,7 @@ describe 'wsusserver::config' do
                      $wsusConfiguration.UseProxy = $false
                      $wsusConfiguration.ProxyName = $false
                      $wsusConfiguration.ProxyServerPort = $false
-                     $wsusConfiguration.Save()'
+                     $wsusConfiguration.Save()',
       :unless    => '$wsusConfiguration = (Get-WsusServer).GetConfiguration()
                     if ($wsusConfiguration.UseProxy -ne $false) {
                       Exit 1
