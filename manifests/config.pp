@@ -302,8 +302,8 @@ class wsusserver::config(
                         Exit 0
                       }
                       Exit 1",
-	logoutput => true,
-	provider  => 'powershell',
+        logoutput => true,
+        provider  => 'powershell',
       }
     } else {
       # Using proxy, need to make sure all settings are correct, but only change if needed
@@ -314,17 +314,17 @@ class wsusserver::config(
                       \$wsusConfiguration.ProxyName = \"${_proxy_settings['server_name']}\"
                       \$wsusConfiguration.ProxyServerPort = ${_proxy_settings['server_port']}
                       \$wsusConfiguration.Save()",
-	#Check each setting, run command if any are incorrect
+        #Check each setting, run command if any are incorrect
         unless    => "\$wsusConfiguration = (Get-WsusServer).GetConfiguration()
                       if (\$wsusConfiguration.UseProxy -ne \$${use_proxy}) {
                         Exit 1
                       }
-		      if (\$wsusConfiguration.ProxyName -ne \"${_proxy_settings['server_name']}\") {
-		        Exit 1
-		      }
-		      if (\$wsusConfiguration.ProxyServerPort -ne ${_proxy_settings['server_port']}) {
-		        Exit 1
-		      }
+                      if (\$wsusConfiguration.ProxyName -ne \"${_proxy_settings['server_name']}\") {
+                        Exit 1
+                      }
+                      if (\$wsusConfiguration.ProxyServerPort -ne ${_proxy_settings['server_port']}) {
+                        Exit 1
+                      }
                       Exit 0",
         logoutput => true,
         provider  => 'powershell',
@@ -333,35 +333,35 @@ class wsusserver::config(
       $anon_access = ! $_proxy_settings['use_credentials']
       if ($anon_access) {
         # Not using credentials, so just make sure AnonymousProxyAccess is correct
-	exec { 'wsus-anonymous-proxy-access':
+        exec { 'wsus-anonymous-proxy-access':
           command   => "\$wsusConfiguration = (Get-WsusServer).GetConfiguration()
                         \$wsusConfiguration.AnonymousProxyAccess = \$${anon_access}
                         \$wsusConfiguration.Save()",
-	  unless    => "\$wsusConfiguration = (Get-WsusServer).GetConfiguration()
+          unless    => "\$wsusConfiguration = (Get-WsusServer).GetConfiguration()
                         Write \"Use credentials  \$${anon_access}\"
                         if (\$wsusConfiguration.AnonymousProxyAccess -eq \$${anon_access}) {
                           Exit 0
                         }
                         Exit 1",
-	  logoutput => true,
-	  provider  => 'powershell',
-	}
+          logoutput => true,
+          provider  => 'powershell',
+        }
       } else {
         # Using credentials, make sure they are correct
-	exec { 'wsus-config-proxy-credentials':
-	  command   => "Write \"Credentials need updating\"
-                        \$wsusConfiguration = (Get-WsusServer).GetConfiguration()
-                        \$wsusConfiguration.AnonymousProxyAccess = \$${anon_access}
-                        \$wsusConfiguration.AllowProxyCredentialsOverNonSsl = \$${_proxy_settings['allow_credentials_over_non_ssl']}
-                        \$wsusConfiguration.ProxyUserName = \"${_proxy_settings['credentials']['username']}\"
-                        \$wsusConfiguration.ProxyUserDomain = \"${_proxy_settings['credentials']['domain']}\"
-                        if (\"${_proxy_settings['credentials']['password']}\" -eq \"\") {
-                          \$wsusConfiguration.HasProxyPassword = \$False
-                        } else {
+        exec { 'wsus-config-proxy-credentials':
+          command   => "Write \"Credentials need updating\"
+                         \$wsusConfiguration = (Get-WsusServer).GetConfiguration()
+                         \$wsusConfiguration.AnonymousProxyAccess = \$${anon_access}
+                         \$wsusConfiguration.AllowProxyCredentialsOverNonSsl = \$${_proxy_settings['allow_credentials_over_non_ssl']}
+                         \$wsusConfiguration.ProxyUserName = \"${_proxy_settings['credentials']['username']}\"
+                         \$wsusConfiguration.ProxyUserDomain = \"${_proxy_settings['credentials']['domain']}\"
+                         if (\"${_proxy_settings['credentials']['password']}\" -eq \"\") {
+                           \$wsusConfiguration.HasProxyPassword = \$False
+                         } else {
                            \$wsusConfiguration.SetProxyPassword(\"${_proxy_settings['credentials']['password']}\")
-                        }
-                        \$wsusConfiguration.Save()",
-	  unless    => "\$wsusConfiguration = (Get-WsusServer).GetConfiguration()
+                         }
+                         \$wsusConfiguration.Save()",
+          unless    => "\$wsusConfiguration = (Get-WsusServer).GetConfiguration()
                         if (\$wsusConfiguration.AnonymousProxyAccess -ne \$${anon_access}) {
                           Exit 1
                         }
@@ -378,9 +378,9 @@ class wsusserver::config(
                           Exit 1
                         }
                         Exit 0",
-	  logoutput => true,
-	  provider  => 'powershell',
-	}
+          logoutput => true,
+          provider  => 'powershell',
+        }
       }
     }
 
