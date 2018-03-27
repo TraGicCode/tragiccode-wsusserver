@@ -184,6 +184,46 @@ class { 'wsusserver':
 
 **NOTE: The list of products, classifications, and languages for microsoft is constantly changing and currently i'm unable to find an updated list of where these can be found.  The best solution at the moment is to open wsusserver, Go to Options => Products and Classifications and picking a name of the product based on the tree view shown.**
 
+### Configuring Proxy and Proxy Credentials
+
+To configure WSUS to use an anonymous proxy
+```puppet
+class {'wsusserver':
+    ....
+    #Use Proxy
+    use_proxy => true,
+
+    #Proxy Settings
+    proxy_settings => {
+        server_name => 'proxy.mydomain.com',
+	server_port => 80,
+	use_credentials => false,
+	allow_credentials_over_non_ssl => true,
+    }
+}
+```
+To use a proxy that requires credentials
+```puppet
+class {'wsusserver':
+    ....
+    #Use Proxy
+    use_proxy => true,
+
+    #Proxy Settings
+    proxy_settings => {
+        server_name => 'proxy.mydomain.com',
+	server_port => 80,
+	use_credentials => true,
+	allow_credentials_over_non_ssl => true,
+	credentials => {
+	    domain   => 'mydomain',
+	    username => 'ProxyUser',
+	    password => 'SecretPassword01',
+        }
+    }
+}
+```
+
 ### Configuring email notifications
 
 To configure sync and/or status report email notifications the `smtp_hostname` and `smtp_sender_emailaddress` must be configured
@@ -410,6 +450,26 @@ Default: true.
 **NOTE: The time it takes to finish the initial synchronization depends on the languages, products, and update classifications that were selected.  It also depends on your internete connection as well.**
 
 **NOTE: When you perform post-installation configuration tasks in the wsus wizard, this is the part at the end that has a check box asking if you want to begin initial synchronization.**
+
+#### `use_proxy`
+
+Specifies that WSUS should use a proxy to access the Internet. Valid options: true, false
+
+Default: false
+
+**NOTE: If set to `true` `proxy_settings => server_name` must be defined**
+
+#### `proxy_settings`
+
+A hash of the settings for the proxy - see below
+ * `proxy_settings => server_name` #Proxy Server name
+ * `proxy_settings => server_port` #Proxy Port - defaults to 80
+ * `proxy_settings => use_credentials` #Whether the proxy can be used anonymously or needs credentials, Valid options: true, false. Default: false
+ * `proxy_settings => allow_credentials_over_non_ssl` #Allow credentials to be sent over non ssl connection, Valid options: true, false, Default: true
+ * `proxy_settings => credentials` #Hash of credentials to use the proxy
+ * `proxy_settings => credentials => username` #Proxy username
+ * `proxy_settings => credentials => domain` #Proxy user domain
+ * `proxy_settings => credentials => password` #Proxy user password
 
 #### `send_sync_notification`
 

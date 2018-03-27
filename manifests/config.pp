@@ -10,6 +10,8 @@ class wsusserver::config(
   Optional[String] $upstream_wsus_server_name        = $wsusserver::params::upstream_wsus_server_name,
   Integer $upstream_wsus_server_port                 = $wsusserver::params::upstream_wsus_server_port,
   Boolean $upstream_wsus_server_use_ssl              = $wsusserver::params::upstream_wsus_server_use_ssl,
+  Boolean $use_proxy                                 = $wsusserver::params::use_proxy,
+  Hash $proxy_settings                               = $wsusserver::params::proxy_settings,
   Enum['Server', 'Client'] $targeting_mode           = $wsusserver::params::targeting_mode,
   Boolean $host_binaries_on_microsoft_update         = $wsusserver::params::host_binaries_on_microsoft_update,
   Boolean $synchronize_automatically                 = $wsusserver::params::synchronize_automatically,
@@ -284,6 +286,104 @@ class wsusserver::config(
       logoutput => true,
       provider  => 'powershell',
     }
+
+    #############################################
+    # Proxy Settings Section
+    #############################################
+
+    if (!$use_proxy) {
+      # Not using a proxy, so just make sure UseProxy is correct
+      exec { 'wsus-config-disable-proxy':
+        command   => "\$wsusConfiguration = (Get-WsusServer).GetConfiguration()
+                      \$wsusConfiguration.UseProxy = \$${use_proxy}
+                      \$wsusConfiguration.Save()",
+        unless    => "\$wsusConfiguration = (Get-WsusServer).GetConfiguration()
+                      if (\$wsusConfiguration.UseProxy -eq \$${use_proxy}) {
+                        Exit 0
+                      }
+                      Exit 1",
+	logoutput => true,
+	provider  => 'powershell',
+      }
+    } else {
+      # Using proxy, need to make sure all settings are correct, but only change if needed
+      $_proxy_settings = merge($wsusserver::params::proxy_settings_defaults, $proxy_settings)
+      exec { 'wsus-config-proxy-settings':
+        command   => "\$wsusConfiguration = (Get-WsusServer).GetConfiguration()
+                      \$wsusConfiguration.UseProxy = \$${use_proxy}
+                      \$wsusConfiguration.ProxyName = \"${_proxy_settings['server_name']}\"
+                      \$wsusConfiguration.ProxyServerPort = ${_proxy_settings['server_port']}
+                      \$wsusConfiguration.Save()",
+	#Check each setting, run command if any are incorrect
+        unless    => "\$wsusConfiguration = (Get-WsusServer).GetConfiguration()
+                      if (\$wsusConfiguration.UseProxy -ne \$${use_proxy}) {
+                        Exit 1
+                      }
+		      if (\$wsusConfiguration.ProxyName -ne \"${_proxy_settings['server_name']}\") {
+		        Exit 1
+		      }
+		      if (\$wsusConfiguration.ProxyServerPort -ne ${_proxy_settings['server_port']}) {
+		        Exit 1
+		      }
+                      Exit 0",
+        logoutput => true,
+        provider  => 'powershell',
+      }
+      # Proxy Credentials settings
+      $anon_access = ! $_proxy_settings['use_credentials']
+      if ($anon_access) {
+        # Not using credentials, so just make sure AnonymousProxyAccess is correct
+	exec { 'wsus-anonymous-proxy-access':
+          command   => "\$wsusConfiguration = (Get-WsusServer).GetConfiguration()
+                        \$wsusConfiguration.AnonymousProxyAccess = \$${anon_access}
+                        \$wsusConfiguration.Save()",
+	  unless    => "\$wsusConfiguration = (Get-WsusServer).GetConfiguration()
+                        Write \"Use credentials  \$${anon_access}\"
+                        if (\$wsusConfiguration.AnonymousProxyAccess -eq \$${anon_access}) {
+                          Exit 0
+                        }
+                        Exit 1",
+	  logoutput => true,
+	  provider  => 'powershell',
+	}
+      } else {
+        # Using credentials, make sure they are correct
+	exec { 'wsus-config-proxy-credentials':
+	  command   => "Write \"Credentials need updating\"
+                        \$wsusConfiguration = (Get-WsusServer).GetConfiguration()
+                        \$wsusConfiguration.AnonymousProxyAccess = \$${anon_access}
+                        \$wsusConfiguration.AllowProxyCredentialsOverNonSsl = \$${_proxy_settings['allow_credentials_over_non_ssl']}
+                        \$wsusConfiguration.ProxyUserName = \"${_proxy_settings['credentials']['username']}\"
+                        \$wsusConfiguration.ProxyUserDomain = \"${_proxy_settings['credentials']['domain']}\"
+                        if (\"${_proxy_settings['credentials']['password']}\" -eq \"\") {
+                          \$wsusConfiguration.HasProxyPassword = \$False
+                        } else {
+                           \$wsusConfiguration.SetProxyPassword(\"${_proxy_settings['credentials']['password']}\")
+                        }
+                        \$wsusConfiguration.Save()",
+	  unless    => "\$wsusConfiguration = (Get-WsusServer).GetConfiguration()
+                        if (\$wsusConfiguration.AnonymousProxyAccess -ne \$${anon_access}) {
+                          Exit 1
+                        }
+                        if (\$wsusConfiguration.AllowProxyCredentialsOverNonSsl -ne \$${_proxy_settings['allow_credentials_over_non_ssl']}) {
+                          Exit 1
+                        }
+                        if (\$wsusConfiguration.ProxyUserName -ne \"${_proxy_settings['credentials']['username']}\") {
+                          Exit 1
+                        }
+                        if (\$wsusConfiguration.ProxyUserDomain -ne \"${_proxy_settings['credentials']['domain']}\") {
+                          Exit 1
+                        }
+                        if (\$wsusConfiguration.ProxyPassword -ne \"${_proxy_settings['credentials']['password']}\") {
+                          Exit 1
+                        }
+                        Exit 0",
+	  logoutput => true,
+	  provider  => 'powershell',
+	}
+      }
+    }
+
     # TODO: 
     # 1.) handle * for all languages instead of having to explicitly list them out
     # 2.) handle better idempotence just in case someone makes a change on the server in the ui? ( all languages )  
