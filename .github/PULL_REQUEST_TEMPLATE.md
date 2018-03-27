@@ -39,6 +39,4 @@
 - [ ] Resource/Class documentation added/updated in README.md?
 - [ ] Examples appropriately added/updated?
 - [ ] Unit tests added/updated?
-      See [DSC Resource Testing Guidelines](https://github.com/PowerShell/DscResources/blob/master/TestsGuidelines.md).
 - [ ] Integration tests added/updated (where possible)?
-      See [DSC Resource Testing Guidelines](https://github.com/PowerShell/DscResources/blob/master/TestsGuidelines.md).
