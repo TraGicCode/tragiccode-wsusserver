@@ -38,13 +38,13 @@ describe 'wsusserver::config' do
     #With defaults - do not config proxy 
     it { should contain_exec('wsus-config-disable-proxy').with({
       :command    => '$wsusConfiguration = (Get-WsusServer).GetConfiguration()
-                     $wsusConfiguration.UseProxy = $false
-                     $wsusConfiguration.Save()',
+                      $wsusConfiguration.UseProxy = $false
+                      $wsusConfiguration.Save()',
       :unless     => '$wsusConfiguration = (Get-WsusServer).GetConfiguration()
-                     if ($wsusConfiguration.UseProxy -eq $false) {
-                       Exit 0
-                     }
-                     Exit 1',
+                      if ($wsusConfiguration.UseProxy -eq $false) {
+                        Exit 0
+                      }
+                      Exit 1',
       :logoutput  => true,
       :provider   => 'powershell',
     }) }
