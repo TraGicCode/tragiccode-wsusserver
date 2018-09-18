@@ -19,8 +19,8 @@ gem 'beaker-rspec'
 gem 'serverspec'
 
 gem 'rake'
-gem 'rubocop'
-gem 'rubocop-rspec'
+gem 'rubocop', '= 0.49.1'
+gem 'rubocop-rspec', '= 1.15.1'
 
 # Debugging
 gem 'pry'                # Pry Debugger: Console driven debugger.  Stops the execution in the middle of a call to allow inspection of ruby variables

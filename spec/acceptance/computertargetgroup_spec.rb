@@ -5,7 +5,7 @@ describe 'wsusserver_computer_target_group' do
     context 'with default parameters' do
       before(:all) do
         @computer_target_group_name = SecureRandom.hex(10)
-        @manifest =  <<-MANIFEST
+        @manifest = <<-MANIFEST
         class { 'wsusserver':
           targeting_mode                            => 'Client',
           trigger_full_synchronization_post_install => false,
@@ -39,7 +39,7 @@ describe 'wsusserver_computer_target_group' do
     context 'with ensure => absent' do
       before(:all) do
         @computer_target_group_name = SecureRandom.hex(10)
-        @manifest =  <<-MANIFEST
+        @manifest = <<-MANIFEST
         class { 'wsusserver':
           targeting_mode                            => 'Client',
           trigger_full_synchronization_post_install => false,
@@ -55,7 +55,7 @@ describe 'wsusserver_computer_target_group' do
       end
 
       it_behaves_like 'an idempotent resource'
-      
+
       context 'when puppet resource is run' do
         before(:all) do
           @result = resource('wsusserver_computer_target_group', @computer_target_group_name)
