@@ -1,10 +1,8 @@
 require 'spec_helper_acceptance'
 
 describe 'wsusserver::approvalrule' do
-
   context 'when installing with provided mandatory parameters' do
-
-    let(:install_manifest) {
+    let(:install_manifest) do
       <<-MANIFEST
           class { 'wsusserver':
             targeting_mode                            => 'Client',
@@ -29,25 +27,23 @@ describe 'wsusserver::approvalrule' do
               computer_groups => ['production']
           }
         MANIFEST
-    }
-
-    it 'should run without errors' do
-      apply_manifest(install_manifest, :catch_failures => true)
     end
 
-    it 'should be idempotent' do
-      apply_manifest(install_manifest, :catch_changes => true)
+    it 'runs without errors' do
+      apply_manifest(install_manifest, catch_failures: true)
+    end
+
+    it 'is idempotent' do
+      apply_manifest(install_manifest, catch_changes: true)
     end
 
     describe command('((Get-WsusServer).GetInstallApprovalRules() | Where-Object { $PSItem.Name -eq "Automatic Approval for Security Updates Rule" }).Count -eq 1') do
-       its(:stdout) { should match /true/i }
+      its(:stdout) { is_expected.to match %r{true}i }
     end
-
   end
 
   context 'when uninstalling with provided mandatory parameters' do
-
-    let(:install_manifest) {
+    let(:install_manifest) do
       <<-MANIFEST
           class { 'wsusserver':
             targeting_mode                            => 'Client',
@@ -66,24 +62,23 @@ describe 'wsusserver::approvalrule' do
                computer_groups => ['production']
           }
         MANIFEST
-    }
-
-    it 'should run without errors' do
-      apply_manifest(install_manifest, :catch_failures => true)
     end
 
-    it 'should be idempotent' do
-      apply_manifest(install_manifest, :catch_changes => true)
+    it 'runs without errors' do
+      apply_manifest(install_manifest, catch_failures: true)
+    end
+
+    it 'is idempotent' do
+      apply_manifest(install_manifest, catch_changes: true)
     end
 
     describe command('((Get-WsusServer).GetInstallApprovalRules() | Where-Object { $PSItem.Name -eq "Automatic Approval for Security Updates Rule" }).Count -eq 0') do
-       its(:stdout) { should match /true/i }
+      its(:stdout) { is_expected.to match %r{true}i }
     end
   end
 
-   context 'when disabling a rule' do
-
-    let(:install_manifest) {
+  context 'when disabling a rule' do
+    let(:install_manifest) do
       <<-MANIFEST
           class { 'wsusserver':
             targeting_mode                            => 'Client',
@@ -103,25 +98,23 @@ describe 'wsusserver::approvalrule' do
               computer_groups => ['production']
           }
         MANIFEST
-    }
-
-    it 'should run without errors' do
-      apply_manifest(install_manifest, :catch_failures => true)
     end
 
-    it 'should be idempotent' do
-      apply_manifest(install_manifest, :catch_changes => true)
+    it 'runs without errors' do
+      apply_manifest(install_manifest, catch_failures: true)
+    end
+
+    it 'is idempotent' do
+      apply_manifest(install_manifest, catch_changes: true)
     end
 
     describe command('((Get-WsusServer).GetInstallApprovalRules() | Where-Object { $PSItem.Name -eq "Automatic Approval for Security Updates Rule" }).Enabled') do
-       its(:stdout) { should match /false/i }
+      its(:stdout) { is_expected.to match %r{false}i }
     end
-
   end
 
   context 'when enabling a rule' do
-
-    let(:install_manifest) {
+    let(:install_manifest) do
       <<-MANIFEST
           class { 'wsusserver':
             targeting_mode                            => 'Client',
@@ -140,25 +133,23 @@ describe 'wsusserver::approvalrule' do
              computer_groups => ['production']
           }
         MANIFEST
-    }
-
-    it 'should run without errors' do
-      apply_manifest(install_manifest, :catch_failures => true)
     end
 
-    it 'should be idempotent' do
-      apply_manifest(install_manifest, :catch_changes => true)
+    it 'runs without errors' do
+      apply_manifest(install_manifest, catch_failures: true)
+    end
+
+    it 'is idempotent' do
+      apply_manifest(install_manifest, catch_changes: true)
     end
 
     describe command('((Get-WsusServer).GetInstallApprovalRules() | Where-Object { $PSItem.Name -eq "Automatic Approval for Security Updates Rule" }).Enabled') do
-       its(:stdout) { should match /true/i }
+      its(:stdout) { is_expected.to match %r{true}i }
     end
-
   end
 
   context 'when adding a classification to a rule' do
-
-    let(:install_manifest) {
+    let(:install_manifest) do
       <<-MANIFEST
           class { 'wsusserver':
             targeting_mode                            => 'Client',
@@ -177,21 +168,18 @@ describe 'wsusserver::approvalrule' do
              computer_groups => ['production']
           }
         MANIFEST
-    }
-
-    it 'should run without errors' do
-      apply_manifest(install_manifest, :catch_failures => true)
     end
 
-    it 'should be idempotent' do
-      apply_manifest(install_manifest, :catch_changes => true)
+    it 'runs without errors' do
+      apply_manifest(install_manifest, catch_failures: true)
+    end
+
+    it 'is idempotent' do
+      apply_manifest(install_manifest, catch_changes: true)
     end
 
     describe command('((Get-WsusServer).GetInstallApprovalRules().GetUpdateClassifications() | Where-Object { $PSItem.Title -eq "Critical Updates" }).Count -eq 1') do
-       its(:stdout) { should match /true/i }
+      its(:stdout) { is_expected.to match %r{true}i }
     end
-
   end
-
-  
 end
