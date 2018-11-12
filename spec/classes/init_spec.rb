@@ -4,19 +4,22 @@ describe 'wsusserver' do
     update_languages = ['en']
     products = ['Windows Server 2016']
     update_classifications = ['Critical Updates']
-    let(:params) {{
-      :update_languages       => update_languages,
-      :products               => products,
-      :update_classifications => update_classifications,
-    }}
+    let(:params) do
+      {
+        update_languages: update_languages,
+        products: products,
+        update_classifications: update_classifications,
+      }
+    end
 
-    it { should contain_class('wsusserver') }
-    it { should contain_class('wsusserver::install').with({
-      :package_ensure             => 'present',
-      :wsus_directory             => 'C:\\WSUS',
-      :include_management_console => true,
-      :join_improvement_program   => true,
-    }) }
+    it { is_expected.to contain_class('wsusserver') }
+    it {
+      is_expected.to contain_class('wsusserver::install')
+        .with(package_ensure: 'present',
+              wsus_directory: 'C:\\WSUS',
+              include_management_console: true,
+              join_improvement_program: true)
+    }
 
     it { should contain_class('wsusserver::config').with({
       :join_improvement_program => true,
@@ -37,7 +40,14 @@ describe 'wsusserver' do
       :proxy_settings                            => {},
     }) }
 
-    it { should contain_class('wsusserver::config').that_requires('Class[wsusserver::install]').that_comes_before('Class[wsusserver::service]') }
-    it { should contain_class('wsusserver::built_in_computer_target_groups').that_requires('Class[wsusserver::install]') }
+    it {
+      is_expected.to contain_class('wsusserver::config')
+        .that_requires('Class[wsusserver::install]')
+        .that_comes_before('Class[wsusserver::service]')
+    }
+    it {
+      is_expected.to contain_class('wsusserver::built_in_computer_target_groups')
+        .that_requires('Class[wsusserver::install]')
+    }
   end
 end

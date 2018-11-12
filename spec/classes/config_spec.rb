@@ -1,15 +1,24 @@
 require 'spec_helper'
 describe 'wsusserver::config' do
   context 'with default values for all parameters' do
+    let(:params) do
+      {
+        update_languages: ['en'],
+        products: ['Windows Server 2016'],
+        update_classifications: ['Critical Updates'],
+      }
+    end
 
-    let(:params) {{
-      :update_languages       => ['en'],
-      :products               => ['Windows Server 2016'],
-      :update_classifications => ['Critical Updates'],
-    }}
+    it { is_expected.to contain_class('wsusserver::config') }
+    it { is_expected.to contain_class('wsusserver::params') }
 
-    it { should contain_class('wsusserver::config') }
-    it { should contain_class('wsusserver::params') }
+    it {
+      is_expected.to contain_exec('wsus-config-update-synchronization')
+        .with(
+          logoutput: true,
+          provider: 'powershell',
+        )
+    }
 
     it { should contain_exec('wsus-config-update-synchronization').with({
       :command   => '$ErrorActionPreference = "Stop"
@@ -77,5 +86,6 @@ describe 'wsusserver::config' do
       :logoutput => true,
       :provider  => 'powershell',
     }) }
+
   end
 end

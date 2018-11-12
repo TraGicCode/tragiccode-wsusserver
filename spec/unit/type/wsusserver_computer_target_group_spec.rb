@@ -65,7 +65,7 @@ describe Puppet::Type.type(:wsusserver_computer_target_group) do
     # end
 
     it 'defaults to present' do
-     expect(wsusserver_computer_target_group[:ensure]).to eq(:present)
+      expect(wsusserver_computer_target_group[:ensure]).to eq(:present)
     end
 
     [:present, :absent].each do |ensure_value|

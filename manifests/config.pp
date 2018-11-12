@@ -434,30 +434,27 @@ class wsusserver::config(
       provider  => 'powershell',
     }
 
-    # Is this needed?
-    # Removing default products and classifications before initial sync
-
     # Get WSUS Subscription and perform initial synchronization to get:
     # 1. Types of updates availabile
     # 1. Products that are available
     # 1. Languages that are available
-    # exec { 'wsus-config-update-initial-synchronization':
-    #   command   => "\$ErrorActionPreference = \"Stop\"
-    #                 \$subscription = (Get-WsusServer).GetSubscription()
-    #                 \$subscription.StartSynchronizationForCategoryOnly()
-    #                 While (\$subscription.GetSynchronizationStatus() -ne 'NotProcessing') {
-    #                   Write-Output \".\" -NoNewline
-    #                   Start-Sleep -Seconds 5
-    #                 }",
-    #   unless    => "\$firstSyncResult = (Get-WsusServer).GetSubscription().GetSynchronizationHistory()[0]
-    #                 if (\$firstSyncResult.Result -eq 'Succeeded') {
-    #                   Exit 0
-    #                 }
-    #                 Exit 1",
-    #   logoutput => true,
-    #   timeout   => 3600,
-    #   provider  => 'powershell',
-    # }
+    exec { 'wsus-config-update-initial-synchronization':
+      command   => "\$ErrorActionPreference = \"Stop\"
+                    \$subscription = (Get-WsusServer).GetSubscription()
+                    \$subscription.StartSynchronizationForCategoryOnly()
+                    While (\$subscription.GetSynchronizationStatus() -ne 'NotProcessing') {
+                      Write-Output \".\" -NoNewline
+                      Start-Sleep -Seconds 5
+                    }",
+      unless    => "\$firstSyncResult = (Get-WsusServer).GetSubscription().GetSynchronizationHistory()[0]
+                    if (\$firstSyncResult.Result -eq 'Succeeded') {
+                      Exit 0
+                    }
+                    Exit 1",
+      logoutput => true,
+      timeout   => 3600,
+      provider  => 'powershell',
+    }
     # products we care about updates for ( office, sql server, windows server 2016, etc..)
         # TODO: 
     # 1.) handle * for all languages instead of having to explicitly list them out

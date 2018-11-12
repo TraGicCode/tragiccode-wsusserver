@@ -8,7 +8,7 @@ gem 'puppet-lint', '>= 1.0.0'
 gem 'puppet-strings'
 gem 'puppetlabs_spec_helper', '>= 1.0.0'
 gem 'rspec-puppet'
-gem 'github_changelog_generator'
+gem "github_changelog_generator",                    require: false, git: 'https://github.com/skywinder/github-changelog-generator', ref: '20ee04ba1234e9e83eb2ffb5056e23d641c7a018' if Gem::Version.new(RUBY_VERSION.dup) >= Gem::Version.new('2.2.2')
 gem 'puppet-blacksmith'
 
 gem 'beaker'
@@ -19,8 +19,8 @@ gem 'beaker-rspec'
 gem 'serverspec'
 
 gem 'rake'
-gem 'rubocop'
-gem 'rubocop-rspec'
+gem 'rubocop', '= 0.49.1'
+gem 'rubocop-rspec', '= 1.15.1'
 
 # Debugging
 gem 'pry'                # Pry Debugger: Console driven debugger.  Stops the execution in the middle of a call to allow inspection of ruby variables
