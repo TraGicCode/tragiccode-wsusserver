@@ -56,7 +56,7 @@ class { 'wsusserver':
         'Windows Server 2016',
     ],
 }
-```
+```dd
 
 This example installs, configures, and manages the wsusserver service.  After running this you should be able to access the WSUS Console to begin you enterprise management of updates.
 
