@@ -373,7 +373,17 @@ The languages in which you want updates for.
 
 *Required.*
 
-The products (e.g. Windows Server 2008 R2), or product families (e.g. Windows) in which you want updates for. Product families contain one or many products, check the WSUS UI for clarification.
+The specific products (e.g. Windows Server 2008 R2), or product families (e.g. Windows) in which you want updates for.
+
+Product families contain one or many products and are shown as groups in the product selection dialgue of the WSUS UI.
+
+Products are the individual products in these lists.
+
+One way to get a complete list is to run the following PowerShell command on a WSUS server:
+
+```powershell
+(Get-WsusServer).GetUpdateCategories() | sort title,type | ft title,type
+```
 
 **NOTE: This is required because this is specific to your organization's requirements.**
 
