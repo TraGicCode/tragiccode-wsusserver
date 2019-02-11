@@ -360,13 +360,13 @@ class wsusserver::config(
     # 1.) handle * for all languages instead of having to explicitly list them out
     # 2.) handle better idempotence just in case someone makes a change on the server in the ui? ( all products? )
     # 3.) Bomb out if the product specified by the user doesnt even exist in the possible list
-    $comma_seperated_products = join($products, ',')
+    $comma_seperated_products = join($products, ';')
     exec { 'wsus-config-update-products':
       command   => "\$ErrorActionPreference = \"Stop\"
                     \$wsusServerSubscription = (Get-WsusServer).GetSubscription()
                     \$allPossibleProducts = (Get-WsusServer).GetUpdateCategories()
                     \$coll = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateCategoryCollection
-                    \$allPossibleProducts | Where-Object { (\"${comma_seperated_products}\" -split \",\") -contains \$PSItem.Title  } | % { \$coll.Add(\$_) }        
+                    \$allPossibleProducts | Where-Object { (\"${comma_seperated_products}\" -split \";\") -contains \$PSItem.Title  } | ForEach-Object { \$coll.Add(\$_) }        
                     \$wsusServerSubscription.SetUpdateCategories(\$coll)
                     \$wsusServerSubscription.Save()",
       unless    => "\$wsusServerSubscription = (Get-WsusServer).GetSubscription()
@@ -391,13 +391,13 @@ class wsusserver::config(
     }
 
     # The update classifications we care about ( critical, security, defintion.. etc )
-    $comma_seperated_update_classifications = join($update_classifications, ',')
+    $comma_seperated_update_classifications = join($update_classifications, ';')
     exec { 'wsus-config-update-classifications':
       command   => "\$ErrorActionPreference = \"Stop\"
                     \$wsusServerSubscription = (Get-WsusServer).GetSubscription()            
                     \$allPossibleUpdateClassifications = (Get-WsusServer).GetUpdateClassifications()            
                     \$coll = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateClassificationCollection            
-                    \$allPossibleUpdateClassifications | Where-Object { (\"${comma_seperated_update_classifications}\" -split \",\") -contains \$PSItem.Title  } | % { \$coll.Add(\$_) }        
+                    \$allPossibleUpdateClassifications | Where-Object { (\"${comma_seperated_update_classifications}\" -split \";\") -contains \$PSItem.Title  } | ForEach-Object { \$coll.Add(\$_) }        
                     \$wsusServerSubscription.SetUpdateClassifications(\$coll)
                     \$wsusServerSubscription.Save()",
       unless    => "\$wsusServerSubscription = (Get-WsusServer).GetSubscription()         
