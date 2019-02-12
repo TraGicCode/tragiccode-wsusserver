@@ -382,7 +382,7 @@ Products are the individual products in these lists.
 One way to get a complete list is to run the following PowerShell command on a WSUS server:
 
 ```powershell
-(Get-WsusServer).GetUpdateCategories() | sort title,type | ft title,type
+(Get-WsusServer).GetUpdateCategories() | Sort-Object -Property Title, Type | Format-Table -Property Title, Type
 ```
 
 **NOTE: This is required because this is specific to your organization's requirements.**
