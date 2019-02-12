@@ -52,8 +52,9 @@ class { 'wsusserver':
       'Windows Server 2016',
     ],
     update_classifications             => [
-        'Windows Server 2012',
-        'Windows Server 2016',
+        'Critical Updates',
+        'Security Updates',
+        'Updates',
     ],
 }
 ```
@@ -82,8 +83,9 @@ class { 'wsusserver':
       'Windows Server 2016',
     ],
     update_classifications             => [
-        'Windows Server 2012',
-        'Windows Server 2016',
+        'Critical Updates',
+        'Security Updates',
+        'Updates',
     ],
     targeting_mode                     => 'Client',
     host_binaries_on_microsoft_update  => false,
@@ -189,9 +191,10 @@ class { 'wsusserver':
       'Windows Server 2016',
     ],
     update_classifications             => [
-        'Windows Server 2012',
-        'Windows Server 2016',
-    ]
+        'Critical Updates',
+        'Security Updates',
+        'Updates',
+    ],
 }
 ```
 
@@ -210,7 +213,7 @@ class { 'wsusserver':
     #Status report email notification settings
     send_status_notification       => true,  
     status_notification_recipients => ['notifications@mydomain.com'],
-    notification_frequency         => 'Weekly',   # 'Weekly' or 'Daily' 
+    notification_frequency         => 'Weekly',   # 'Weekly' or 'Daily'
     notification_time_of_day       => '03:00:00', # 3AM ( UTC ) 24H Clock
 
     #SMTP Server Settings
@@ -218,7 +221,7 @@ class { 'wsusserver':
     smtp_sender_displayname        => 'WSUS Server Notifications',
     smtp_sender_emailaddress       => 'wsusserver@mydomain.com',
     ##Optional settings
-    smtp_port                      => 25,    
+    smtp_port                      => 25,
     ##Not yet implemented settings
     smtp_requires_authentication   => false,
     smtp_username                  => '',
@@ -370,7 +373,17 @@ The languages in which you want updates for.
 
 *Required.*
 
-The products in which you want updates for.
+The specific products (e.g. Windows Server 2008 R2), or product families (e.g. Windows) in which you want updates for.
+
+Product families contain one or many products and are shown as groups in the product selection dialgue of the WSUS UI.
+
+Products are the individual products in these lists.
+
+One way to get a complete list is to run the following PowerShell command on a WSUS server:
+
+```powershell
+(Get-WsusServer).GetUpdateCategories() | Sort-Object -Property Title, Type | Format-Table -Property Title, Type
+```
 
 **NOTE: This is required because this is specific to your organization's requirements.**
 
@@ -432,7 +445,7 @@ Default: false
 
 **NOTE: if set to `true` you must also specify sync_notification_recipient(s) and smtp server details**
 
-#### `sync_notification_recipients`   
+#### `sync_notification_recipients`
 
 Specifies the recipients of sync notification emails. Accepts an arrays of addresses, e.g. ['notifications@mydomain.com', 'another@mydomain.com']
 
