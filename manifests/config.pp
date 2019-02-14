@@ -375,7 +375,7 @@ class wsusserver::config(
                     {
                       \$currentEnabledProducts = @('')
                     }
-                    \$compareResult = Compare-Object -ReferenceObject \$currentEnabledProducts -DifferenceObject (\"${comma_seperated_products}\").Split(\",\")
+                    \$compareResult = Compare-Object -ReferenceObject \$currentEnabledProducts -DifferenceObject (\"${comma_seperated_products}\").Split(\";\")
                     if(\$compareResult -eq \$null)
                     {
                         # no differences
@@ -406,7 +406,7 @@ class wsusserver::config(
                     {
                       \$currentEnabledUpdateClassifications = @('')
                     }
-                    \$compareResult = Compare-Object -ReferenceObject \$currentEnabledUpdateClassifications -DifferenceObject (\"${comma_seperated_update_classifications}\").Split(\",\")
+                    \$compareResult = Compare-Object -ReferenceObject \$currentEnabledUpdateClassifications -DifferenceObject (\"${comma_seperated_update_classifications}\").Split(\";\")
                     if(\$compareResult -eq \$null)
                     {
                         # no differences
