@@ -1,6 +1,7 @@
 class wsusserver(
   Array[String, 1] $update_languages,
-  Array[String, 1] $products,
+  Array[String, 0] $products = [],
+  Optional[Array[String]] $product_families = [],
   Array[String, 1] $update_classifications,
   Enum['present', 'absent'] $package_ensure          = $wsusserver::params::package_ensure,
   Boolean $include_management_console                = $wsusserver::params::include_management_console,
@@ -50,6 +51,7 @@ class wsusserver(
     upstream_wsus_server_use_ssl              => $upstream_wsus_server_use_ssl,
     update_languages                          => $update_languages,
     products                                  => $products,
+    product_families                          => $product_families,
     update_classifications                    => $update_classifications,
     targeting_mode                            => $targeting_mode,
     host_binaries_on_microsoft_update         => $host_binaries_on_microsoft_update,
