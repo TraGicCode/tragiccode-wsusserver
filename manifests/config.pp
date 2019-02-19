@@ -356,20 +356,15 @@ class wsusserver::config(
       timeout   => 3600,
       provider  => 'powershell',
     }
-    # products we care about updates for ( office, sql server, windows server 2016, etc..)
-        # TODO: 
-    # 1.) handle * for all languages instead of having to explicitly list them out
-    # 2.) handle better idempotence just in case someone makes a change on the server in the ui? ( all products? )
-    # 3.) Bomb out if the product specified by the user doesnt even exist in the possible list
+
+    # products and product_families we care about updates for ( office, sql server, windows server 2016, etc..)
     $comma_seperated_products = join($products, ';')
     $comma_seperated_product_families = join($product_families, ';')
 
     debug("Products: ${comma_seperated_products}")
-
     debug("Product Families: ${comma_seperated_product_families}")
 
     exec { 'wsus-config-update-products':
-
       command   => "function Invoke-WsusCategoryConfig {
                       param (
                         [String[]]\$ProductTitles,
@@ -534,7 +529,6 @@ class wsusserver::config(
                       # differences
                       Exit 1
                     }",
-
       logoutput => true,
       provider  => 'powershell',
     }
