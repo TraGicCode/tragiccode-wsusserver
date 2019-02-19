@@ -1,7 +1,7 @@
 class wsusserver(
   Array[String, 1] $update_languages,
-  Array[String, 0] $products = [],
-  Optional[Array[String]] $product_families = [],
+  Variant[ Enum['*'], Array[String] ] $products = [],
+  Array[String] $product_families = [],
   Array[String, 1] $update_classifications,
   Enum['present', 'absent'] $package_ensure          = $wsusserver::params::package_ensure,
   Boolean $include_management_console                = $wsusserver::params::include_management_console,
@@ -35,6 +35,14 @@ class wsusserver(
   String $smtp_sender_emailaddress                   = $wsusserver::params::smtp_sender_emailaddress,
   String $email_language                             = $wsusserver::params::email_language,
 ) inherits wsusserver::params {
+
+  if $products == '*' and !(empty($product_families)) {
+    fail('cannot provide a value for product_families when products is set to all (*).')
+  }
+
+  if empty($products) and empty($product_families) {
+    fail('must provide a value for either products or product_families (or both).')
+  }
 
   class { 'wsusserver::install':
     package_ensure             => $package_ensure,

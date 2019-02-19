@@ -18,8 +18,7 @@ class { 'wsusserver':
   synchronize_time_of_day                   => '03:00:00', # this is in UTC, 24H Clock
   number_of_synchronizations_per_day        => 1,
   trigger_full_synchronization_post_install => false,
-  #products                                  => [ '*' ], # all products
-  products                                  => [ 'Windows Server 2012 R2', 'Windows Server 2016', 'Windows Server 2019' ],
+  products                                  => [ 'Windows Server 2012 R2', 'Windows Server 2016'], # or '*' for all products
   product_families                          => ['SQL Server', 'Developer Tools, Runtimes, and Redistributables'],
   update_classifications                    => [ 'Critical Updates', 'Security Updates', 'Updates'],
 }
