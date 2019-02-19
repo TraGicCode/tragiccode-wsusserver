@@ -1,7 +1,5 @@
 class wsusserver(
   Array[String, 1] $update_languages,
-  Variant[ Enum['*'], Array[String] ] $products = [],
-  Array[String] $product_families = [],
   Array[String, 1] $update_classifications,
   Enum['present', 'absent'] $package_ensure          = $wsusserver::params::package_ensure,
   Boolean $include_management_console                = $wsusserver::params::include_management_console,
@@ -34,6 +32,8 @@ class wsusserver(
   String $smtp_sender_displayname                    = $wsusserver::params::smtp_sender_displayname,
   String $smtp_sender_emailaddress                   = $wsusserver::params::smtp_sender_emailaddress,
   String $email_language                             = $wsusserver::params::email_language,
+  Variant[ Enum['*'], Array[String] ] $products = [],
+  Array[String] $product_families = [],
 ) inherits wsusserver::params {
 
   if $products == '*' and !(empty($product_families)) {
