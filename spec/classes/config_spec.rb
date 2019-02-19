@@ -5,6 +5,7 @@ describe 'wsusserver::config' do
       {
         update_languages: ['en'],
         products: ['Windows Server 2016'],
+        product_families: ['SQL Server'],
         update_classifications: ['Critical Updates'],
       }
     end
