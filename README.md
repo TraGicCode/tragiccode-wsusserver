@@ -82,6 +82,10 @@ class { 'wsusserver':
       'SQL Server 2012 Product Updates for Setup',
       'Windows Server 2016',
     ],
+    product_families                   => [
+      'SQL Server',
+      'System Center',
+    ],
     update_classifications             => [
         'Critical Updates',
         'Security Updates',
@@ -189,6 +193,10 @@ class { 'wsusserver':
       'SQL Server Feature Pack',
       'SQL Server 2012 Product Updates for Setup',
       'Windows Server 2016',
+    ],
+        product_families                   => [
+      'SQL Server',
+      'System Center',
     ],
     update_classifications             => [
         'Critical Updates',
@@ -371,19 +379,37 @@ The languages in which you want updates for.
 
 #### `products`
 
-*Required.*
+*Must supply either products or product_families*
 
-The specific products (e.g. Windows Server 2008 R2), or product families (e.g. Windows) in which you want updates for.
+The specific products (e.g. Windows Server 2008 R2, Windows Server 2016), that you want WSUS to sync updates for.
 
 Product families contain one or many products and are shown as groups in the product selection dialgue of the WSUS UI.
 
 Products are the individual products in these lists.
 
-One way to get a complete list is to run the following PowerShell command on a WSUS server:
+One way to get a complete list of products and product families is to run the following PowerShell command on a WSUS server:
 
 ```powershell
 (Get-WsusServer).GetUpdateCategories() | Sort-Object -Property Title, Type | Format-Table -Property Title, Type
 ```
+#### `product_families`
+
+*Must supply either products or product_families*
+
+The specific products families (e.g. Windows, SQL Server), that you want WSUS to sync updates for.
+
+Product families contain one or many products and are shown as groups in the product selection dialgue of the WSUS UI.
+
+Products are the individual products in these lists.
+
+One way to get a complete list of products and product families is to run the following PowerShell command on a WSUS server:
+
+```powershell
+(Get-WsusServer).GetUpdateCategories() | Sort-Object -Property Title, Type | Format-Table -Property Title, Type
+```
+
+**NOTE: This is required because this is specific to your organization's requirements.**
+
 
 **NOTE: This is required because this is specific to your organization's requirements.**
 
