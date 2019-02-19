@@ -35,6 +35,8 @@ The wsusserver module requires the following:
 * Puppet Agent 4.7.1 or later.
 * Windows Server 2016.
 
+*Note - The module also works on Windows Server 2012 & 2012 R2 with WMF(PowerShell) 5.1 installed, but only limited testing has been performed.*
+
 ### Beginning with wsusserver
 
 To get started with the wsusserver module simply include the following in your manifest:
