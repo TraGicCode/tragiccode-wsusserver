@@ -196,7 +196,7 @@ class { 'wsusserver':
       'SQL Server 2012 Product Updates for Setup',
       'Windows Server 2016',
     ],
-        product_families                   => [
+    product_families                   => [
       'SQL Server',
       'System Center',
     ],
