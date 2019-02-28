@@ -1,12 +1,37 @@
-# The baseline for module testing used by Puppet Inc. is that each manifest
-# should have a corresponding test manifest that declares that class or defined
-# type.
 #
-# Tests are then run by using puppet apply --noop (to check for compilation
-# errors and view a log of events) or by fully applying the test in a virtual
-# environment (to compare the resulting system state to the desired state).
+# example config for wsusserver
 #
-# Learn more about module testing here:
-# https://docs.puppet.com/guides/tests_smoke.html
-#
-include ::wsusserver
+
+class { 'wsusserver':
+  package_ensure                     => 'present',
+  include_management_console         => true,
+  service_manage                     => true,
+  service_ensure                     => 'running',
+  service_enable                     => true,
+  wsus_directory                     => 'C:\\WSUS',
+  join_improvement_program           => false,
+  sync_from_microsoft_update         => true,
+  update_languages                   => ['en'],
+  products                           => [
+    'Active Directory Rights Management Services Client 2.0',
+    'ASP.NET Web Frameworks',
+    'Microsoft SQL Server 2012',
+    'SQL Server Feature Pack',
+    'SQL Server 2012 Product Updates for Setup',
+    'Windows Server 2016',
+  ],
+  product_families                   => [
+    'SQL Server',
+    'System Center',
+  ],
+  update_classifications             => [
+      'Critical Updates',
+      'Security Updates',
+      'Updates',
+  ],
+  targeting_mode                     => 'Client',
+  host_binaries_on_microsoft_update  => false,
+  synchronize_automatically          => true,
+  synchronize_time_of_day            => '03:00:00', # 3AM ( UTC ) 24H Clock
+  number_of_synchronizations_per_day => 1,
+}

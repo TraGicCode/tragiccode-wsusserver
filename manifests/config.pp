@@ -3,7 +3,8 @@
 #
 class wsusserver::config(
   Array[String, 1] $update_languages,
-  Array[String, 1] $products,
+  Array[String, 0] $products,
+  Optional[Array[String]] $product_families,
   Array[String, 1] $update_classifications,
   Boolean $join_improvement_program                  = $wsusserver::params::join_improvement_program,
   Boolean $sync_from_microsoft_update                = $wsusserver::params::sync_from_microsoft_update,
@@ -355,36 +356,178 @@ class wsusserver::config(
       timeout   => 3600,
       provider  => 'powershell',
     }
-    # products we care about updates for ( office, sql server, windows server 2016, etc..)
-        # TODO: 
-    # 1.) handle * for all languages instead of having to explicitly list them out
-    # 2.) handle better idempotence just in case someone makes a change on the server in the ui? ( all products? )
-    # 3.) Bomb out if the product specified by the user doesnt even exist in the possible list
+
+    # products and product_families we care about updates for ( office, sql server, windows server 2016, etc..)
     $comma_seperated_products = join($products, ';')
+    $comma_seperated_product_families = join($product_families, ';')
+
+    debug("Products: ${comma_seperated_products}")
+    debug("Product Families: ${comma_seperated_product_families}")
+
     exec { 'wsus-config-update-products':
-      command   => "\$ErrorActionPreference = \"Stop\"
+      command   => "function Invoke-WsusCategoryConfig {
+                      param (
+                        [String[]]\$ProductTitles,
+                        [ValidateSet(\"product\", \"productfamily\")][String]\$Type,
+                        [Microsoft.UpdateServices.Administration.UpdateCategoryCollection]\$NewProducts
+                      )
+
+                      # get all possible products
+                      \$allPossibleProducts = (Get-WsusServer).GetUpdateCategories() | Where-Object {\$_.type -eq \$Type}
+
+                      # if product titles is not blank, then validate supplied product titles
+                      if (\$ProductTitles -ne \"\" -and \$null -ne \$ProductTitles) {
+                        ForEach (\$product in \$ProductTitles) {
+                          if (\$allPossibleProducts.Title -notcontains \$product) {
+                            # some invalid product names have been supplied
+                            # write to stderr but don't stop
+                            Write-Host \"Invalid product name supplied - \$product\" -ErrorAction Continue
+                            # a controlled exit with non-zero  status
+                            Exit 3
+                          }
+                          else {
+                            # product title is valid. add it to the new collection
+                            [void]\$NewProducts.add( (\$allPossibleProducts | Where-Object {\$_.Title -eq \$product -and \$_.type -eq \$Type} | Select-Object -First 1) )
+                          }
+                        }
+                      }
+                      else {
+                        # no product titles supplied. that's fine, but we need an empty object to compare
+                        \$ProductTitles = @('')
+                      }
+
+                      # get all current synced products
+                      \$currentProducts = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateCategoryCollection
+
+                      # add currently enabled products and product families to the collection object
+                      \$wsusServerSubscription.GetUpdateCategories() | ForEach-Object {[void]\$currentProducts.add(\$_)}
+
+                      # get products configured that match the supplied type
+                      \$referenceObject = \$currentProducts | where-object {\$_.type -eq \$Type} | Select-Object -ExpandProperty Title -Unique 
+
+                      # if none, blank array for object compare
+                      if (\$null -eq \$referenceObject) { \$referenceObject = @('') }
+
+                      # compare
+                      \$productCompare = Compare-Object -ReferenceObject \$referenceObject -DifferenceObject \$ProductTitles
+
+                      # loop throuch each difference
+                      Foreach (\$difference in \$productCompare) {
+                        # check it's not blank - this happens if no product titles have been supplied
+                        if (\$difference.InputObject -ne \"\") {
+                          if (\$difference.SideIndicator -eq \"=>\") {
+                            # it's in the desired list but not configured, so it's being added
+                            Write-Host \"Adding \$Type \$(\$difference.InputObject)\"
+                          }
+                          else {
+                            # it's not in the desired list but configured, so it's being removed
+                            Write-Host \"Removing \$Type \$(\$difference.InputObject)\"
+                          }
+                        }
+                      }
+                    }
+
+                    trap {
+                      # using write-host so the error goes to stdout, which is all the puppet exec resource picks up
+                      Write-Host \"Unhandled exception caught:\"
+                      Write-Host \$_.invocationinfo.positionmessage.ToString() # Line the error was generated on
+                      Write-Host \$_.exception.ToString()                      # Error message
+                      exit 165
+                    }
+
+                    \$ErrorActionPreference = \"Stop\"
+                    # interpolate variables from puppet
+                    \$commaSeparatedProducts = \"${comma_seperated_products}\"
+                    \$commaSeparatedProductFamilies = \"${comma_seperated_product_families}\"
+                    # get wsus server subscription configuration
                     \$wsusServerSubscription = (Get-WsusServer).GetSubscription()
-                    \$allPossibleProducts = (Get-WsusServer).GetUpdateCategories()
-                    \$coll = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateCategoryCollection
-                    \$allPossibleProducts | Where-Object { (\"${comma_seperated_products}\" -split \";\") -contains \$PSItem.Title  } | ForEach-Object { \$coll.Add(\$_) }        
-                    \$wsusServerSubscription.SetUpdateCategories(\$coll)
+
+                    \$newUpdateCollection = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateCategoryCollection
+
+                    # check for valid parameters
+                    if (\$commaSeparatedProducts -eq \"*\" -and \$commaSeparatedProductFamilies -ne \"\") {
+                      # write to stderr but don't stop
+                      Write-Host \"Cannot sync both all products (*) and a subset of product families\" -ErrorAction Continue
+                      # a controlled exit with non-zero  status
+                      Exit 2
+                    }
+                    elseif (\$commaSeparatedProducts -eq \"*\") {
+                      # synchronizing all products
+                      Write-Host \"Configuring WSUS to synchronize all products\"
+                      # add all categories to the collection
+                      (Get-WsusServer).GetUpdateCategories() | ForEach-Object {[void]\$newUpdateCollection.add(\$_)}
+                    }
+                    else {
+                      # synchronizing only specific products and/or families
+
+                      # products
+                      if (\$commaSeparatedProducts -ne \"\" -and \$null -ne \$commaSeparatedProducts) {
+                        # we've been supplied some products to sync
+                        # split them back to an array
+                        \$products = \$commaSeparatedProducts -split \";\"
+                      }
+                      else { 
+                        \$products = \$null
+
+                      }
+                      if (\$commaSeparatedProductFamilies -ne \"\" -and \$null -ne \$commaSeparatedProductFamilies) {
+                        # we've been supplied some product families to sync
+                        # split them back to an array
+                        \$productFamilies = \$commaSeparatedProductFamilies -split \";\"
+                      }
+                      else {
+                        \$productFamilies = \$null
+                      }
+
+                      Invoke-WsusCategoryConfig -ProductTitles \$products -Type \"product\" -NewProducts \$newUpdateCollection
+                      Invoke-WsusCategoryConfig -ProductTitles \$productFamilies -Type \"productfamily\" -NewProducts \$newUpdateCollection
+                    }
+
+                    # configure wsus
+                    \$wsusServerSubscription.SetUpdateCategories(\$newUpdateCollection)
                     \$wsusServerSubscription.Save()",
-      unless    => "\$wsusServerSubscription = (Get-WsusServer).GetSubscription()
-                    \$currentEnabledProducts = \$wsusServerSubscription.GetUpdateCategories().Title
-                    if(\$currentEnabledProducts -eq \$null)
-                    {
-                      \$currentEnabledProducts = @('')
+
+      unless    => "trap {
+                      # using write-host so the error goes to stdout, which is all the puppet exec resource picks up
+                      Write-Host \"Unhandled exception caught:\"
+                      Write-Host \$_.invocationinfo.positionmessage.ToString() # Line the error was generated on
+                      Write-Host \$_.exception.ToString()                      # Error message
+                      exit 165
                     }
-                    \$compareResult = Compare-Object -ReferenceObject \$currentEnabledProducts -DifferenceObject (\"${comma_seperated_products}\").Split(\",\")
-                    if(\$compareResult -eq \$null)
-                    {
-                        # no differences
-                        Exit 0
+                    \$ErrorActionPreference = \"Stop\"
+                    # interpolate variables from puppet
+                              \$commaSeparatedProducts = \"${comma_seperated_products}\"
+                              \$commaSeparatedProductFamilies = \"${comma_seperated_product_families}\"
+                    # get current wsus subscription config
+                    \$wsusServerSubscription = (Get-WsusServer).GetSubscription()
+                    if (\$commaSeparatedProducts -eq \"*\") {
+                      # all products should be selected        
+                      \$desired_products = ((Get-WsusServer).GetUpdateCategories() | Where-Object {\$_.type -eq \"product\"}).Title
+                      \$desired_productfamilies = ((Get-WsusServer).GetUpdateCategories() | Where-Object {\$_.type -eq \"productfamily\"}).Title
                     }
-                    else
-                    {
-                        # differences
-                        Exit 1
+                    else {
+                      \$desired_products = \$commaSeparatedProducts.Split(\";\")
+                      \$desired_productfamilies = \$commaSeparatedProductFamilies.Split(\";\")
+                    }
+                    # get current enabled product families, blank array if none
+                    \$currentEnabledProductFamilies = (\$wsusServerSubscription.GetUpdateCategories() | Where-Object {\$_.type -eq \"productfamily\"}).Title
+                    if (\$null -eq \$currentEnabledProductFamilies) { \$currentEnabledProductFamilies = @('') }
+                    # get current enabled products, blank array if none
+                    \$currentEnabledProducts = (\$wsusServerSubscription.GetUpdateCategories() | Where-Object {\$_.type -eq \"product\"}).Title
+                    if (\$null -eq \$currentEnabledProducts) { \$currentEnabledProducts = @('') }
+                    # compare product families
+                    \$compareProductFamiliesResult = Compare-Object -ReferenceObject \$currentEnabledProductFamilies -DifferenceObject \$desired_productfamilies
+                    # compare products
+                    \$compareProductsResult = Compare-Object -ReferenceObject \$currentEnabledProducts -DifferenceObject \$desired_products
+                    # check results
+                    if (\$null -eq \$compareProductFamiliesResult -and \$null -eq \$compareProductsResult) {
+                      # no differences
+                      Exit 0
+                    }
+                    else {
+                      Write-Host \"WSUS product or product family configuration does not match desired state\"
+                      # differences
+                      Exit 1
                     }",
       logoutput => true,
       provider  => 'powershell',
@@ -406,7 +549,7 @@ class wsusserver::config(
                     {
                       \$currentEnabledUpdateClassifications = @('')
                     }
-                    \$compareResult = Compare-Object -ReferenceObject \$currentEnabledUpdateClassifications -DifferenceObject (\"${comma_seperated_update_classifications}\").Split(\",\")
+                    \$compareResult = Compare-Object -ReferenceObject \$currentEnabledUpdateClassifications -DifferenceObject (\"${comma_seperated_update_classifications}\").Split(\";\")
                     if(\$compareResult -eq \$null)
                     {
                         # no differences
