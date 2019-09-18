@@ -2,13 +2,30 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org).
 
-## [1.1.1](https://github.com/tragiccode/tragiccode-wsusserver/tree/1.1.1) (2018-09-18)
+## [v1.1.2](https://github.com/tragiccode/tragiccode-wsusserver/tree/v1.1.2) (2019-09-17)
 
-[Full Changelog](https://github.com/tragiccode/tragiccode-wsusserver/compare/v1.1.0...1.1.1)
+[Full Changelog](https://github.com/tragiccode/tragiccode-wsusserver/compare/v1.1.1...v1.1.2)
+
+### Added
+
+- wsusserver: support product families [\#28](https://github.com/TraGicCode/tragiccode-wsusserver/pull/28) ([nathangiuliani](https://github.com/nathangiuliani))
+
+### Fixed
+
+- improve robustness for approvalrule.pp [\#29](https://github.com/TraGicCode/tragiccode-wsusserver/pull/29) ([kreeuwijk](https://github.com/kreeuwijk))
+- wsusserver: fix comma separator in product or category name, update readme [\#27](https://github.com/TraGicCode/tragiccode-wsusserver/pull/27) ([nathangiuliani](https://github.com/nathangiuliani))
+
+## [v1.1.1](https://github.com/tragiccode/tragiccode-wsusserver/tree/v1.1.1) (2018-09-18)
+
+[Full Changelog](https://github.com/tragiccode/tragiccode-wsusserver/compare/v1.1.0...v1.1.1)
 
 ### Fixed
 
 - \(bug\) Uncomment WSUS initial synchronization exec [\#22](https://github.com/TraGicCode/tragiccode-wsusserver/pull/22) ([TraGicCode](https://github.com/TraGicCode))
+
+### UNCATEGORIZED PRS; GO LABEL THEM
+
+- Prepping release. [\#24](https://github.com/TraGicCode/tragiccode-wsusserver/pull/24) ([TraGicCode](https://github.com/TraGicCode))
 
 ## [v1.1.0](https://github.com/tragiccode/tragiccode-wsusserver/tree/v1.1.0) (2018-03-18)
 
