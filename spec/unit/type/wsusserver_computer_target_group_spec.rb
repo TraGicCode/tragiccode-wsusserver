@@ -36,7 +36,7 @@ describe Puppet::Type.type(:wsusserver_computer_target_group) do
       }.to raise_error(Puppet::Error, %r{A non-empty computer target group name must})
     end
 
-    ['^', '~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '=', '+', '[', ']', '{', '}', '\\', '|', ';', ':', '\'', '"', '<', '>', '/'].each do |invalid_character|
+    ['^', '~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '=', '+', '[', ']', '{', '}', '|', ';', ':', '\'', '"', '<', '>', '/'].each do |invalid_character|
       it "cannot contain the #{invalid_character} character" do
         expect {
           wsusserver_computer_target_group[:name] = invalid_character
