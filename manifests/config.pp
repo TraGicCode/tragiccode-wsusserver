@@ -92,7 +92,7 @@ class wsusserver::config(
         provider  => 'powershell',
       }
       #Update EmailLanguage if needed
-      # Default to english 
+      # Default to english
       if ($email_language == undef or empty($email_language)) {
         $email_language = 'en'
       }
@@ -170,7 +170,7 @@ class wsusserver::config(
       #Set recip to correct list
       command   => "\$ErrorActionPreference = \"Stop\"
                     \$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
-                    \$wsusEmailRecipients = \$wsusEmailNotificationConfiguration.SyncNotificationRecipients.toString() 
+                    \$wsusEmailRecipients = \$wsusEmailNotificationConfiguration.SyncNotificationRecipients.toString()
                     write-output \"Updating recipients from: \$wsusEmailRecipients to: ${sync_recipients}\"
                     #Clear recipient list
                     \$wsusEmailNotificationConfiguration.SyncNotificationRecipients.Clear()
@@ -202,7 +202,7 @@ class wsusserver::config(
         #Set recip to correct list
         command   => "\$ErrorActionPreference = \"Stop\"
                       \$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
-                      \$wsusEmailRecipients = \$wsusEmailNotificationConfiguration.StatusNotificationRecipients.toString() 
+                      \$wsusEmailRecipients = \$wsusEmailNotificationConfiguration.StatusNotificationRecipients.toString()
                       write-output \"Updating recipients from: \$wsusEmailRecipients to: ${status_recipients}\"
                       #Clear recipient list
                       \$wsusEmailNotificationConfiguration.StatusNotificationRecipients.Clear()
@@ -285,9 +285,9 @@ class wsusserver::config(
       logoutput => true,
       provider  => 'powershell',
     }
-    # TODO: 
+    # TODO:
     # 1.) handle * for all languages instead of having to explicitly list them out
-    # 2.) handle better idempotence just in case someone makes a change on the server in the ui? ( all languages )  
+    # 2.) handle better idempotence just in case someone makes a change on the server in the ui? ( all languages )
     $comma_seperated_update_languages = join($update_languages, ',')
     exec { 'wsus-config-update-languages':
       command   => "\$ErrorActionPreference = \"Stop\"
@@ -403,7 +403,7 @@ class wsusserver::config(
                       \$wsusServerSubscription.GetUpdateCategories() | ForEach-Object {[void]\$currentProducts.add(\$_)}
 
                       # get products configured that match the supplied type
-                      \$referenceObject = \$currentProducts | where-object {\$_.type -eq \$Type} | Select-Object -ExpandProperty Title -Unique 
+                      \$referenceObject = \$currentProducts | where-object {\$_.type -eq \$Type} | Select-Object -ExpandProperty Title -Unique
 
                       # if none, blank array for object compare
                       if (\$null -eq \$referenceObject) { \$referenceObject = @('') }
@@ -466,7 +466,7 @@ class wsusserver::config(
                         # split them back to an array
                         \$products = \$commaSeparatedProducts -split \";\"
                       }
-                      else { 
+                      else {
                         \$products = \$null
 
                       }
@@ -501,7 +501,7 @@ class wsusserver::config(
                     # get current wsus subscription config
                     \$wsusServerSubscription = (Get-WsusServer).GetSubscription()
                     if (\$commaSeparatedProducts -eq \"*\") {
-                      # all products should be selected        
+                      # all products should be selected
                       \$desired_products = ((Get-WsusServer).GetUpdateCategories() | Where-Object {\$_.type -eq \"product\"}).Title
                       \$desired_productfamilies = ((Get-WsusServer).GetUpdateCategories() | Where-Object {\$_.type -eq \"productfamily\"}).Title
                     }
@@ -537,13 +537,13 @@ class wsusserver::config(
     $comma_seperated_update_classifications = join($update_classifications, ';')
     exec { 'wsus-config-update-classifications':
       command   => "\$ErrorActionPreference = \"Stop\"
-                    \$wsusServerSubscription = (Get-WsusServer).GetSubscription()            
-                    \$allPossibleUpdateClassifications = (Get-WsusServer).GetUpdateClassifications()            
-                    \$coll = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateClassificationCollection            
-                    \$allPossibleUpdateClassifications | Where-Object { (\"${comma_seperated_update_classifications}\" -split \";\") -contains \$PSItem.Title  } | ForEach-Object { \$coll.Add(\$_) }        
+                    \$wsusServerSubscription = (Get-WsusServer).GetSubscription()
+                    \$allPossibleUpdateClassifications = (Get-WsusServer).GetUpdateClassifications()
+                    \$coll = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateClassificationCollection
+                    \$allPossibleUpdateClassifications | Where-Object { (\"${comma_seperated_update_classifications}\" -split \";\") -contains \$PSItem.Title  } | ForEach-Object { \$coll.Add(\$_) }
                     \$wsusServerSubscription.SetUpdateClassifications(\$coll)
                     \$wsusServerSubscription.Save()",
-      unless    => "\$wsusServerSubscription = (Get-WsusServer).GetSubscription()         
+      unless    => "\$wsusServerSubscription = (Get-WsusServer).GetSubscription()
                     \$currentEnabledUpdateClassifications = \$wsusServerSubscription.GetUpdateClassifications().Title
                     if(\$currentEnabledUpdateClassifications -eq \$null)
                     {

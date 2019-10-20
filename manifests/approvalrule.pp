@@ -1,6 +1,6 @@
 # Define: wsusserver::approvalrule
 # Parameters:
-# 
+#
 #
 define wsusserver::approvalrule (
     Array[String] $classifications, # Critical update, security update...etc
@@ -43,7 +43,7 @@ define wsusserver::approvalrule (
                           \$wsus = Get-WsusServer
                           \$approvalRule = \$wsus.GetInstallApprovalRules() | Where-Object { \$PSItem.Name -eq \"${rule_name}\" }
                           \$classificationCollection = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateClassificationCollection -ErrorAction Stop
-                          Get-WsusClassification | Select-Object -ExpandProperty Classification | Where-Object { (\"${comma_seperated_classifications}\" -split \",\") -contains \$PSItem.Title  } | % { \$classificationCollection.Add(\$_) }  
+                          Get-WsusClassification | Select-Object -ExpandProperty Classification | Where-Object { (\"${comma_seperated_classifications}\" -split \",\") -contains \$PSItem.Title  } | % { \$classificationCollection.Add(\$_) }
                           \$approvalRule.SetUpdateClassifications(\$classificationCollection)
                           \$approvalRule.Save()",
             onlyif    => "\$ErrorActionPreference = \"Stop\"
@@ -70,7 +70,7 @@ define wsusserver::approvalrule (
                           \$wsus = Get-WsusServer
                           \$approvalRule = \$wsus.GetInstallApprovalRules() | Where-Object { \$PSItem.Name -eq \"${rule_name}\" }
                           \$productCollection = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateCategoryCollection
-                          Get-WsusProduct | Select-Object -ExpandProperty Product | Where-Object { (\"${comma_seperated_products}\" -split \",\") -contains \$PSItem.Title  } | % { \$productCollection.Add(\$_) }  
+                          Get-WsusProduct | Select-Object -ExpandProperty Product | Where-Object { (\"${comma_seperated_products}\" -split \",\") -contains \$PSItem.Title  } | % { \$productCollection.Add(\$_) }
                           \$approvalRule.SetCategories(\$productCollection)
                           \$approvalRule.Save()",
             onlyif    => "\$ErrorActionPreference = \"Stop\"
@@ -97,7 +97,7 @@ define wsusserver::approvalrule (
                           \$wsus = Get-WsusServer
                           \$approvalRule = \$wsus.GetInstallApprovalRules() | Where-Object { \$PSItem.Name -eq \"${rule_name}\" }
                           \$computerGroupCollection = New-Object -TypeName Microsoft.UpdateServices.Administration.ComputerTargetGroupCollection
-                          (Get-WsusServer).GetComputerTargetGroups() | Where-Object { (\"${comma_seperated_computer_groups}\" -split \",\") -contains \$PSItem.Name  } | % { \$computerGroupCollection.Add(\$_) }  
+                          (Get-WsusServer).GetComputerTargetGroups() | Where-Object { (\"${comma_seperated_computer_groups}\" -split \",\") -contains \$PSItem.Name  } | % { \$computerGroupCollection.Add(\$_) }
                           \$approvalRule.SetComputerTargetGroups(\$computerGroupCollection)
                           \$approvalRule.Save()",
             onlyif    => "\$ErrorActionPreference = \"Stop\"

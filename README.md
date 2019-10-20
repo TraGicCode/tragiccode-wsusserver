@@ -250,6 +250,18 @@ wsusserver_computer_target_group { ['Development', 'Staging', 'Production']:
 }
 ```
 
+You can also nest computer target groups. Separate the levels using `'\\'` between each level. You may want to do this when servers require 
+additional updates a particular update needs to be excluded. For example: An application may need an update specific to that application or have 
+one excluded since it breaks the application. Below shows how to create nested computer target groups. Intermediate levels will be created
+automatically.
+
+```puppet
+wsusserver_computer_target_group { ['Common\\Special App', 'Common\\Broken App']:
+    ensure => 'present',
+}
+```
+**NOTE: If using hieradata in yaml files then only a single `'\'` is required.**
+
 ### Removing computer target groups
 
 Removing is just as simple as creating is.
@@ -259,6 +271,8 @@ wsusserver_computer_target_group { ['Development', 'Staging', 'Production']:
     ensure => 'absent',
 }
 ```
+
+**NOTE: If removing a group that contains sublevels, the  sublevels will also be removed.**
 
 **NOTE: By Default, wsuserver has 2 built-in computer groups created.  They are named 'All Computers' and 'Unassigned Computers'.  The wsusserver base/main class declares these for you and therefore you don't need to create these in order to have these resources show up in your puppet reports as being present.  Also because these built-in groups cannot be deleted, since wsusserver will not allow it, if you plan on doing any sort of purging of unmanaged computer target groups just make sure the main class is in the catalog so the purging will not fail trying to delete the above 2 built-in computer target groups.**
 
@@ -572,6 +586,7 @@ Installs, configures, and manages WSUS computer target groups.
 ##### `name`
 
 Specifies a computer target group to manage. Valid options: a string containing the name of your computer target group.
+If nesting groups separate them with a `'\'`.
 
 Default: the title of your declared resource.
 

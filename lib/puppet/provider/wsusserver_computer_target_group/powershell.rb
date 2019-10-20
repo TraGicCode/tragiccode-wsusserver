@@ -3,14 +3,23 @@ Puppet::Type.type(:wsusserver_computer_target_group).provide(:powershell) do
 
   # Initializes property_hash
   def self.instances
+    # All Computers is no longer returned so no longer need it in built_in_computer_target_groups
     get_computer_target_groups = <<-EOF
-(Get-WsusServer).GetComputerTargetGroups() | % {
-  New-Object -TypeName PSObject -Property @{
-      name = $PSItem.Name
-      id   = $PSItem.Id
-  }
-} | ConvertTo-Json -Depth 10
-  EOF
+$ErrorActionPreference = "Stop"
+$wsus = Get-WsusServer
+function Get-ChildGroups {
+    param($parentGroup, $parentName)
+    $parentGroup.GetChildTargetGroups() | ForEach-Object {
+        $name = "$($parentName)\\$($_.Name)"
+        New-Object -TypeName PSObject -Property @{
+            name = $name.Substring(1)
+            id   = $_.Id
+        }
+        Get-ChildGroups $_ $name
+    }
+}
+Get-ChildGroups ($wsus.GetComputerTargetGroups() | Where-Object {$_.Name -eq "All Computers"}) "" | ConvertTo-Json -Depth 1
+EOF
     output = powershell(get_computer_target_groups)
     json_parsed_output = JSON.parse(output)
     Puppet.debug("json parsed computer target groups are #{json_parsed_output}")
@@ -46,7 +55,17 @@ Puppet::Type.type(:wsusserver_computer_target_group).provide(:powershell) do
   def create
     Puppet.debug("Creating #{resource[:name]}")
     create_computer_target_group = <<-EOF
-(Get-WsusServer).CreateComputerTargetGroup('#{resource[:name]}')
+$ErrorActionPreference = "Stop"
+$wsus = Get-WsusServer
+$parent = ($wsus.GetComputerTargetGroups() | Where-Object {$_.Name -eq "All Computers"})
+foreach ($level in ("#{resource[:name]}" -split "\\\\\\\\")) {
+    if ($nextLevel = $parent.GetChildTargetGroups() | Where-Object {$_.Name -eq $level}) {
+        $parent = $nextLevel
+    }
+    else {
+        $parent = $wsus.CreateComputerTargetGroup($level, $parent)
+    }
+}
 EOF
     powershell(create_computer_target_group)
 

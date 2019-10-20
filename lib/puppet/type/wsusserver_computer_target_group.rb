@@ -18,7 +18,7 @@ Puppet::Type.newtype(:wsusserver_computer_target_group) do
     desc 'The name of the computer target group.'
     validate do |value|
       raise('A non-empty computer target group name must be specified.') if value.empty? || value.nil?
-      raise('The computer target group name cannot contain any of the characters certain special characeters.') if value !~ %r{^[^~!@#$%^&*()=+\[\]{}\\|;:\'"<>\/]+$}
+      raise('The computer target group name cannot contain any of the characters certain special characters.') if value !~ %r{^[^~!@#$%^&*()=+\[\]{}|;:\'"<>\/]+$}
     end
   end
 
