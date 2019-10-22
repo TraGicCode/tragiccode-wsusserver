@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file. The format 
 ### Added
 
 - wsusserver: support nesting of computer target groups
+- config.pp: fixed update sync settings (provided by [nathangiuliani](https://github.com/nathangiuliani))
 
 ## [v1.1.2](https://github.com/tragiccode/tragiccode-wsusserver/tree/v1.1.2) (2019-09-17)
 

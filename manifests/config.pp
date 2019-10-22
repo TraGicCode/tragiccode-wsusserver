@@ -617,7 +617,10 @@ class wsusserver::config(
                     \$wsusSubscription.NumberOfSynchronizationsPerDay=${number_of_synchronizations_per_day}
                     \$wsusSubscription.Save()",
       unless    => "\$wsusSubscription = (Get-WsusServer).GetSubscription()
-                    if (\$wsusSubscription.SynchronizeAutomatically -eq \$${synchronize_automatically}) {
+                    if (\$wsusSubscription.SynchronizeAutomatically -eq \$${synchronize_automatically} -and
+                        \$wsusSubscription.NumberOfSynchronizationsPerDay -eq ${number_of_synchronizations_per_day} -and
+                        \$wsusSubscription.SynchronizeAutomaticallyTimeOfDay -eq [System.TimeSpan]::Parse(\"${synchronize_time_of_day}\")
+                    ) {
                       Exit 0
                     }
                     Exit 1",
