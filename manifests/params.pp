@@ -11,6 +11,7 @@ class wsusserver::params {
     $wsus_directory = 'C:\\WSUS'
     $join_improvement_program = true
     $sync_from_microsoft_update = true
+    $replica_server = false
     $upstream_wsus_server_name = ''
     $upstream_wsus_server_port = 80
     $upstream_wsus_server_use_ssl = false

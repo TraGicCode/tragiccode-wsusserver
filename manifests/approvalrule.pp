@@ -2,6 +2,7 @@
 # Parameters:
 #
 #
+# Adding -Unique stops corrective action applying if duplicate rules get created by accident
 define wsusserver::approvalrule (
     Array[String] $classifications, # Critical update, security update...etc
     Array[String] $products,
@@ -14,11 +15,14 @@ define wsusserver::approvalrule (
         exec { "create-wsus-approvalrule-${rule_name}":
             command   => "\$ErrorActionPreference = \"Stop\"
                           \$wsus = Get-WsusServer
-                          \$wsus.CreateInstallApprovalRule(\"${rule_name}\")",
+                          [void]\$wsus.CreateInstallApprovalRule(\"${rule_name}\")",
             onlyif    => "\$ErrorActionPreference = \"Stop\"
-                          \$wsus = Get-WsusServer
-                          \$result = \$wsus.GetInstallApprovalRules() | Where-Object { \$PSItem.Name -eq \"${rule_name}\" }
-                          if(\$result.Count -eq 0) { Exit 0 } Else { Exit 1 }",
+                          if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                            \$wsus = Get-WsusServer
+                            if (\$wsus.GetConfiguration().IsReplicaServer) {Exit 1}    # Don't run on a replica
+                            \$result = \$wsus.GetInstallApprovalRules() | Where-Object { \$PSItem.Name -eq \"${rule_name}\" }
+                            if(\$result.Count -eq 0) { Exit 0 } Else { Exit 1 }
+                          } Else {Exit 1}",
             logoutput => true,
             provider  => 'powershell',
         }
@@ -30,9 +34,12 @@ define wsusserver::approvalrule (
                           \$approvalRule.Enabled = \$${enabled}
                           \$approvalRule.Save()",
             onlyif    => "\$ErrorActionPreference = \"Stop\"
-                          \$wsus = Get-WsusServer
-                          \$approvalRule = \$wsus.GetInstallApprovalRules() | Where-Object { \$PSItem.Name -eq \"${rule_name}\" }
-                          if(\$approvalRule.Enabled -ne \$${enabled}) { Exit 0 } Else { Exit 1 }",
+                          if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                            \$wsus = Get-WsusServer
+                            if (\$wsus.GetConfiguration().IsReplicaServer) {Exit 1}    # Don't run on a replica
+                            \$approvalRule = \$wsus.GetInstallApprovalRules() | Where-Object { \$PSItem.Name -eq \"${rule_name}\" }
+                            if(\$null -ne \$approvalRule -and \$approvalRule.Enabled -ne \$${enabled}) { Exit 0 } Else { Exit 1 }
+                          } Else {Exit 1}",
             logoutput => true,
             provider  => 'powershell',
         }
@@ -43,23 +50,30 @@ define wsusserver::approvalrule (
                           \$wsus = Get-WsusServer
                           \$approvalRule = \$wsus.GetInstallApprovalRules() | Where-Object { \$PSItem.Name -eq \"${rule_name}\" }
                           \$classificationCollection = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateClassificationCollection -ErrorAction Stop
-                          Get-WsusClassification | Select-Object -ExpandProperty Classification | Where-Object { (\"${comma_seperated_classifications}\" -split \",\") -contains \$PSItem.Title  } | % { \$classificationCollection.Add(\$_) }
+                          Get-WsusClassification | Select-Object -ExpandProperty Classification | Where-Object { (\"${comma_seperated_classifications}\" -split \",\") -contains \$PSItem.Title  } | ForEach-Object { [void]\$classificationCollection.Add(\$_) }
                           \$approvalRule.SetUpdateClassifications(\$classificationCollection)
                           \$approvalRule.Save()",
             onlyif    => "\$ErrorActionPreference = \"Stop\"
-                          \$wsus = Get-WsusServer
-                          \$approvalRule = \$wsus.GetInstallApprovalRules() | Where-Object { \$PSItem.Name -eq \"${rule_name}\" }
-                          \$currentApprovalClassifications = \$approvalRule.GetUpdateClassifications() | Select-Object -ExpandProperty Title
-                          if(\$currentApprovalClassifications -eq \$null)
-                          {
-                            \$currentApprovalClassifications = \"\"
-                          }
-                          \$compareResult = Compare-Object -ReferenceObject \$currentApprovalClassifications -DifferenceObject (\"${comma_seperated_classifications}\").Split(\",\")
-                          if(\$compareResult -eq \$null)
-                          {
-                            # no differences
-                            Exit 1
-                          } Else { Exit 0 }",
+                          if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                            \$wsus = Get-WsusServer
+                            if (\$wsus.GetConfiguration().IsReplicaServer) {Exit 1}    # Don't run on a replica
+                            \$approvalRule = \$wsus.GetInstallApprovalRules() | Where-Object { \$PSItem.Name -eq \"${rule_name}\" }
+                            if(\$null -eq \$approvalRule) {
+                              # matching rule doesn't exist
+                              Exit 1
+                            }
+                            \$currentApprovalClassifications = \$approvalRule.GetUpdateClassifications() | Select-Object -ExpandProperty Title -Unique
+                            if(\$currentApprovalClassifications -eq \$null)
+                            {
+                              \$currentApprovalClassifications = \"\"
+                            }
+                            \$compareResult = Compare-Object -ReferenceObject \$currentApprovalClassifications -DifferenceObject (\"${comma_seperated_classifications}\").Split(\",\")
+                            if(\$compareResult -eq \$null)
+                            {
+                              # no differences
+                              Exit 1
+                            } Else { Exit 0 }
+                          } Else {Exit 1}",
             logoutput => true,
             provider  => 'powershell',
         }
@@ -70,23 +84,30 @@ define wsusserver::approvalrule (
                           \$wsus = Get-WsusServer
                           \$approvalRule = \$wsus.GetInstallApprovalRules() | Where-Object { \$PSItem.Name -eq \"${rule_name}\" }
                           \$productCollection = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateCategoryCollection
-                          Get-WsusProduct | Select-Object -ExpandProperty Product | Where-Object { (\"${comma_seperated_products}\" -split \",\") -contains \$PSItem.Title  } | % { \$productCollection.Add(\$_) }
+                          Get-WsusProduct | Select-Object -ExpandProperty Product | Where-Object { (\"${comma_seperated_products}\" -split \",\") -contains \$PSItem.Title  } | ForEach-Object { [void]\$productCollection.Add(\$_) }
                           \$approvalRule.SetCategories(\$productCollection)
                           \$approvalRule.Save()",
             onlyif    => "\$ErrorActionPreference = \"Stop\"
-                          \$wsus = Get-WsusServer
-                          \$approvalRule = \$wsus.GetInstallApprovalRules() | Where-Object { \$PSItem.Name -eq \"${rule_name}\" }
-                          \$currentApprovalCategories = \$approvalRule.GetCategories() | Select-Object -ExpandProperty Title
-                          if(\$currentApprovalCategories -eq \$null)
-                          {
-                            \$currentApprovalCategories = \"\"
-                          }
-                          \$compareResult = Compare-Object -ReferenceObject \$currentApprovalCategories -DifferenceObject (\"${comma_seperated_products}\").Split(\",\")
-                          if(\$compareResult -eq \$null)
-                          {
-                            # no differences
-                            Exit 1
-                          } Else { Exit 0 }",
+                          if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                            \$wsus = Get-WsusServer
+                            if (\$wsus.GetConfiguration().IsReplicaServer) {Exit 1}    # Don't run on a replica
+                            \$approvalRule = \$wsus.GetInstallApprovalRules() | Where-Object { \$PSItem.Name -eq \"${rule_name}\" }
+                            if(\$null -eq \$approvalRule) {
+                              # matching rule doesn't exist
+                              Exit 1
+                            }
+                            \$currentApprovalCategories = \$approvalRule.GetCategories() | Select-Object -ExpandProperty Title -Unique
+                            if(\$currentApprovalCategories -eq \$null)
+                            {
+                              \$currentApprovalCategories = \"\"
+                            }
+                            \$compareResult = Compare-Object -ReferenceObject \$currentApprovalCategories -DifferenceObject (\"${comma_seperated_products}\").Split(\",\")
+                            if(\$compareResult -eq \$null)
+                            {
+                              # no differences
+                              Exit 1
+                            } Else { Exit 0 }
+                          } Else {Exit 1}",
             logoutput => true,
             provider  => 'powershell',
         }
@@ -97,23 +118,30 @@ define wsusserver::approvalrule (
                           \$wsus = Get-WsusServer
                           \$approvalRule = \$wsus.GetInstallApprovalRules() | Where-Object { \$PSItem.Name -eq \"${rule_name}\" }
                           \$computerGroupCollection = New-Object -TypeName Microsoft.UpdateServices.Administration.ComputerTargetGroupCollection
-                          (Get-WsusServer).GetComputerTargetGroups() | Where-Object { (\"${comma_seperated_computer_groups}\" -split \",\") -contains \$PSItem.Name  } | % { \$computerGroupCollection.Add(\$_) }
+                          \$wsus.GetComputerTargetGroups() | Where-Object { (\"${comma_seperated_computer_groups}\" -split \",\") -contains \$PSItem.Name  } | ForEach-Object { [void]\$computerGroupCollection.Add(\$_) }
                           \$approvalRule.SetComputerTargetGroups(\$computerGroupCollection)
                           \$approvalRule.Save()",
             onlyif    => "\$ErrorActionPreference = \"Stop\"
-                          \$wsus = Get-WsusServer
-                          \$approvalRule = \$wsus.GetInstallApprovalRules() | Where-Object { \$PSItem.Name -eq \"${rule_name}\" }
-                          \$currentComputerTargetGroups = \$approvalRule.GetComputerTargetGroups() | Select-Object -ExpandProperty Name
-                          if(\$currentComputerTargetGroups -eq \$null)
-                          {
-                            \$currentComputerTargetGroups = \"\"
-                          }
-                          \$compareResult = Compare-Object -ReferenceObject \$currentComputerTargetGroups -DifferenceObject (\"${comma_seperated_computer_groups}\").Split(\",\")
-                          if(\$compareResult -eq \$null)
-                          {
-                            # no differences
-                            Exit 1
-                          } { Exit 0 }",
+                          if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                            \$wsus = Get-WsusServer
+                            if (\$wsus.GetConfiguration().IsReplicaServer) {Exit 1}    # Don't run on a replica
+                            \$approvalRule = \$wsus.GetInstallApprovalRules() | Where-Object { \$PSItem.Name -eq \"${rule_name}\" }
+                            if(\$null -eq \$approvalRule) {
+                              # matching rule doesn't exist
+                              Exit 1
+                            }
+                            \$currentComputerTargetGroups = \$approvalRule.GetComputerTargetGroups() | Select-Object -ExpandProperty Name -Unique
+                            if(\$currentComputerTargetGroups -eq \$null)
+                            {
+                              \$currentComputerTargetGroups = \"\"
+                            }
+                            \$compareResult = Compare-Object -ReferenceObject \$currentComputerTargetGroups -DifferenceObject (\"${comma_seperated_computer_groups}\").Split(\",\")
+                            if(\$compareResult -eq \$null)
+                            {
+                              # no differences
+                              Exit 1
+                            } Else { Exit 0 }
+                          } Else {Exit 1}",
             logoutput => true,
             provider  => 'powershell',
         }
@@ -123,13 +151,16 @@ define wsusserver::approvalrule (
             command   => "\$ErrorActionPreference = \"Stop\"
                           \$wsus = Get-WsusServer
                           \$rule = \$wsus.GetInstallApprovalRules() | Where-Object { \$PSItem.Name -eq \"${rule_name}\" }
-                          (Get-WsusServer).DeleteInstallApprovalRule(\$rule.Id)",
+                          \$wsus.DeleteInstallApprovalRule(\$rule.Id)",
             onlyif    => "\$ErrorActionPreference = \"Stop\"
-                          \$wsus = Get-WsusServer
-                          \$result = \$wsus.GetInstallApprovalRules() | Where-Object { \$PSItem.Name -eq \"${rule_name}\" }
-                          if(\$result.Count -eq 1) {
-                            Exit 0
-                          } Else { Exit 1 }",
+                          if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                            \$wsus = Get-WsusServer
+                            if (\$wsus.GetConfiguration().IsReplicaServer) {Exit 1}    # Don't run on a replica
+                            \$result = \$wsus.GetInstallApprovalRules() | Where-Object { \$PSItem.Name -eq \"${rule_name}\" }
+                            if(\$result.Count -eq 1) {
+                              Exit 0
+                            } Else { Exit 1 }
+                          } Else {Exit 1}",
             logoutput => true,
             provider  => 'powershell',
         }

@@ -4,21 +4,35 @@ Puppet::Type.type(:wsusserver_computer_target_group).provide(:powershell) do
   # Initializes property_hash
   def self.instances
     # All Computers is no longer returned so no longer need it in built_in_computer_target_groups
+    # Returns empty JSON if WSUS not installed
+    # Wraps single group in [] so Ruby can process it
     get_computer_target_groups = <<-EOF
 $ErrorActionPreference = "Stop"
-$wsus = Get-WsusServer
-function Get-ChildGroups {
-    param($parentGroup, $parentName)
-    $parentGroup.GetChildTargetGroups() | ForEach-Object {
-        $name = "$($parentName)\\$($_.Name)"
-        New-Object -TypeName PSObject -Property @{
-            name = $name.Substring(1)
-            id   = $_.Id
-        }
-        Get-ChildGroups $_ $name
-    }
+if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+  $wsus = Get-WsusServer
+  # No harm in running on a replica
+  function Get-ChildGroups {
+      param($parentGroup, $parentName)
+      $parentGroup.GetChildTargetGroups() | ForEach-Object {
+          $name = "$($parentName)\\$($_.Name)"
+          New-Object -TypeName PSObject -Property @{
+              name = $name.Substring(1)
+              id   = $_.Id
+          }
+          Get-ChildGroups $_ $name
+      }
+  }
+  $groups = @(Get-ChildGroups ($wsus.GetComputerTargetGroups() | Where-Object {$_.Name -eq "All Computers"}) "")
+  if ($groups.Count -eq 1) {
+    "[{0}]" -f ($groups | ConvertTo-Json -Depth 1)
+  }
+  else {
+    $groups | ConvertTo-Json -Depth 1
+  }
 }
-Get-ChildGroups ($wsus.GetComputerTargetGroups() | Where-Object {$_.Name -eq "All Computers"}) "" | ConvertTo-Json -Depth 1
+else {
+  '{}'
+}
 EOF
     output = powershell(get_computer_target_groups)
     json_parsed_output = JSON.parse(output)
@@ -56,15 +70,20 @@ EOF
     Puppet.debug("Creating #{resource[:name]}")
     create_computer_target_group = <<-EOF
 $ErrorActionPreference = "Stop"
-$wsus = Get-WsusServer
-$parent = ($wsus.GetComputerTargetGroups() | Where-Object {$_.Name -eq "All Computers"})
-foreach ($level in ("#{resource[:name]}" -split "\\\\\\\\")) {
-    if ($nextLevel = $parent.GetChildTargetGroups() | Where-Object {$_.Name -eq $level}) {
-        $parent = $nextLevel
+if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+  $wsus = Get-WsusServer
+  if (-not $wsus.GetConfiguration().IsReplicaServer) {
+    # Only runs on non-replica servers
+    $parent = ($wsus.GetComputerTargetGroups() | Where-Object {$_.Name -eq "All Computers"})
+    foreach ($level in ("#{resource[:name]}" -split "\\\\\\\\")) {
+        if ($nextLevel = $parent.GetChildTargetGroups() | Where-Object {$_.Name -eq $level}) {
+            $parent = $nextLevel
+        }
+        else {
+            $parent = $wsus.CreateComputerTargetGroup($level, $parent)
+        }
     }
-    else {
-        $parent = $wsus.CreateComputerTargetGroup($level, $parent)
-    }
+  }
 }
 EOF
     powershell(create_computer_target_group)
@@ -76,8 +95,14 @@ EOF
   def destroy
     Puppet.debug("Deleting #{resource[:name]}")
     delete_computer_target_group = <<-EOF
-$computer_target_group = (Get-WsusServer).GetComputerTargetGroup('#{@property_hash[:id]}')
-$computer_target_group.Delete()
+if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+  $wsus = Get-WsusServer
+  if (-not $wsus.GetConfiguration().IsReplicaServer) {
+    # Only runs on non-replica servers
+    $computer_target_group = ($wsus).GetComputerTargetGroup('#{@property_hash[:id]}')
+    $computer_target_group.Delete()
+  }
+}
 EOF
     powershell(delete_computer_target_group)
     @property_hash.clear

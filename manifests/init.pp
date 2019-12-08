@@ -10,6 +10,7 @@ class wsusserver(
   Stdlib::Absolutepath $wsus_directory               = $wsusserver::params::wsus_directory,
   Boolean $join_improvement_program                  = $wsusserver::params::join_improvement_program,
   Boolean $sync_from_microsoft_update                = $wsusserver::params::sync_from_microsoft_update,
+  Boolean $replica_server                            = $wsusserver::params::replica_server,
   Optional[String] $upstream_wsus_server_name        = $wsusserver::params::upstream_wsus_server_name,
   Integer $upstream_wsus_server_port                 = $wsusserver::params::upstream_wsus_server_port,
   Boolean $upstream_wsus_server_use_ssl              = $wsusserver::params::upstream_wsus_server_use_ssl,
@@ -54,6 +55,7 @@ class wsusserver(
   class { 'wsusserver::config':
     join_improvement_program                  => $join_improvement_program,
     sync_from_microsoft_update                => $sync_from_microsoft_update,
+    replica_server                            => $replica_server,
     upstream_wsus_server_name                 => $upstream_wsus_server_name,
     upstream_wsus_server_port                 => $upstream_wsus_server_port,
     upstream_wsus_server_use_ssl              => $upstream_wsus_server_use_ssl,

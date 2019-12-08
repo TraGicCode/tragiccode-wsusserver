@@ -9,7 +9,8 @@
     * [Setup requirements](#setup-requirements)
     * [Beginning with wsusserver](#beginning-with-wsusserver)
 1. [Usage - Configuration options and additional functionality](#usage)
-    * [Host binaries at microsoft](#host-binaries-at-microsoft)
+    * [Host binaries at Microsoft](#host-binaries-at-microsoft)
+    * [Configuring a WSUS Replica Server](#configuring-a-wsus-replica-server)
     * [Configuring Server-Side Targeting](#configuring-server-side-targeting)
     * [Configuring Client-Side Targeting](#configuring-client-side-targeting)
     * [Customizing the Synchronization Schedule](#customizing-the-synchronization-schedule)
@@ -61,7 +62,7 @@ class { 'wsusserver':
 }
 ```
 
-This example installs, configures, and manages the wsusserver service.  After running this you should be able to access the WSUS Console to begin you enterprise management of updates.
+This example installs, configures, and manages the WSUS server service.  After running this you should be able to access the WSUS Console to begin your enterprise management of updates.
 
 A more advanced configuration including most attributes available for the base/main class:
 
@@ -105,9 +106,9 @@ The above is just an example of the flexibility you have with this module.  You 
 
 ## Usage
 
-### Host binaries at microsoft
+### Host binaries at Microsoft
 
-Updates can be downloaded locally on the wsusserver and machines can pull approved and appropriate updates for installation straight from the wsusserver.  Since updates from microsoft are very large in size this requires a good amount of disk space to be available.  One option is to use the wsus server for approval and checking of updates and inform the clients they should pull updates directly from microsoft's updates servers relieving your server of the load and disk space.  This can be configured like so.
+Updates can be downloaded locally on the WSUS server and machines can pull approved and appropriate updates for installation straight from the WSUS server.  Since updates from Microsoft are very large in size this requires a good amount of disk space to be available.  One option is to use the WSUS server for approval and checking of updates and inform the clients they should pull updates directly from Microsoft's updates servers relieving your server of the load and disk space.  This can be configured like so.
 
 ```puppet
 class { 'wsusserver':
@@ -116,11 +117,24 @@ class { 'wsusserver':
 }
 ```
 
-**NOTE: In order to use this option each machine needs someway to get out to the public internet to pull their updates directly from microsoft.**
+**NOTE: In order to use this option each machine needs someway to get out to the public internet to pull their updates directly from Microsoft.**
+
+### Configuring a WSUS Replica Server
+
+Servers can be configured as replica servers which means you only need to maintain update approvals, target groups etc in one place. This can be configured like so.
+
+```puppet
+class { 'wsusserver':
+    package_ensure              => 'present',
+    replica_server              => true,
+    upstream_wsus_server_name   => 'upstream_server@some.domain',
+    sync_from_microsoft_update  => false,
+}
+```
 
 ### Configuring Server-Side Targeting
 
-Updates can be targeted in 2 ways.  Client-side or Server-side.  Server-side targeting indicates some administrator must move computers in the appropriate computer groups in order for them to get their desired updates.  By default all computers that need to be manually classified will be found in the UnAssigned Computers group.  Server-side target is rarely used since it requires manual intervention.  While not recommended this can be done like so:
+Updates can be targeted in 2 ways.  Client-side or Server-side.  Server-side targeting indicates some administrator must move computers in the appropriate computer groups in order for them to get their desired updates.  By default all computers that need to be manually classified will be found in the UnAssigned Computers group.  Server-side target is rarely used since it requires manual intervention.  While not recommended this can be done like so.
 
 ```puppet
 class { 'wsusserver':
@@ -149,7 +163,7 @@ It's recommended to avoid group policy all together and simply utilize the [pupp
 
 ### Customizing the Synchronization Schedule
 
-The process of wsus server checking for new categories, products, and updates is called synchronization. While this can be done manually, it's typically done automatically on a configured scheduled.  Below is an example of how to configure automatic synchronization every day at around 3:00AM UTC ( which is the default configured by this module ).
+The process of WSUS server checking for new categories, products, and updates is called synchronization. While this can be done manually, it's typically done automatically on a configured scheduled.  Below is an example of how to configure automatic synchronization every day at around 3:00AM UTC ( which is the default configured by this module ).
 
 ```puppet
 class { 'wsusserver':
@@ -178,11 +192,11 @@ class { 'wsusserver':
 }
 ```
 
-**NOTE: The synchronization time of day has a random offset up to 30 minutes from the what you specify.  This is done automatically by microsoft in order to prevent a stampeeding herd on their servers.**
+**NOTE: The synchronization time of day has a random offset up to 30 minutes from the what you specify.  This is done automatically by Microsoft in order to prevent a stampeeding herd on their servers.**
 
 ### Customizing Languages and Products
 
-You typically don't want WSUS to manage updates in all languages or even for all products, there is just too many and this would require a huge server just to pull this load.  Therefore, you typically specify a subset of the full list of languages and products you would like wsus server to manage updates for.  Below is an example of this.
+You typically don't want WSUS to manage updates in all languages or even for all products, there is just too many and this would require a huge server just to pull this load.  Therefore, you typically specify a subset of the full list of languages and products you would like WSUS server to manage updates for.  Below is an example of this.
 
 ```puppet
 class { 'wsusserver':
@@ -208,7 +222,7 @@ class { 'wsusserver':
 }
 ```
 
-**NOTE: The list of products, classifications, and languages for microsoft is constantly changing and currently i'm unable to find an updated list of where these can be found.  The best solution at the moment is to open wsusserver, Go to Options => Products and Classifications and picking a name of the product based on the tree view shown.**
+**NOTE: The list of products, classifications, and languages for Microsoft is constantly changing and currently i'm unable to find an updated list of where these can be found.  The best solution at the moment is to open the WSUS server GUI, Go to Options => Products and Classifications and picking a name of the product based on the tree view shown.**
 
 ### Configuring email notifications
 
@@ -274,11 +288,11 @@ wsusserver_computer_target_group { ['Development', 'Staging', 'Production']:
 
 **NOTE: If removing a group that contains sublevels, the  sublevels will also be removed.**
 
-**NOTE: By Default, wsuserver has 2 built-in computer groups created.  They are named 'All Computers' and 'Unassigned Computers'.  The wsusserver base/main class declares these for you and therefore you don't need to create these in order to have these resources show up in your puppet reports as being present.  Also because these built-in groups cannot be deleted, since wsusserver will not allow it, if you plan on doing any sort of purging of unmanaged computer target groups just make sure the main class is in the catalog so the purging will not fail trying to delete the above 2 built-in computer target groups.**
+**NOTE: By Default, WSUS server has 2 built-in computer groups created.  They are named 'All Computers' and 'Unassigned Computers'.  The wsusserver base/main class declares these for you and therefore you don't need to create these in order to have these resources show up in your puppet reports as being present.  Also because these built-in groups cannot be deleted, since WSUS server will not allow it, if you plan on doing any sort of purging of unmanaged computer target groups just make sure the main class is in the catalog so the purging will not fail trying to delete the above 2 built-in computer target groups.**
 
 ### Removing automatic approval rules
 
-When you initially install wsus ( and possibly in the future ) you might want to remove certain approval rules.  Below shows how to remove the built in approval rule.
+When you initially install WSUS ( and possibly in the future ) you might want to remove certain approval rules.  Below shows how to remove the built in approval rule.
 
 ```puppet
 wsusserver::approvalrule { 'Default Automatic Approval Rule':
@@ -302,7 +316,7 @@ wsusserver::approvalrule { 'Automatic Approval for Security and Critical Updates
 
 ### Removing automatic approval rules
 
-When you initially install wsus ( and possibly in the future ) you might want to remove certain approval rules.  Below shows how to remove the built in approval rule.
+When you initially install WSUS ( and possibly in the future ) you might want to remove certain approval rules.  Below shows how to remove the built in approval rule.
 
 ```puppet
 wsusserver::approvalrule { 'Default Automatic Approval Rule':
@@ -328,7 +342,7 @@ Default: 'present'.
 
 #### `include_management_console`
 
-Specified if the management console should be installed.  This is the GUI used to manage wsus.
+Specified if the management console should be installed.  This is the GUI used to manage WSUS.
 
 Default: true.
 
@@ -358,31 +372,43 @@ Default: 'C:\WSUS'.
 
 #### `join_improvement_program`
 
-Allows microsoft to collect statistics about your system configuration, events, and configuration of wsus to help microsoft improve the quality, reliability and performance of the product. Valid options: true, false
+Allows Microsoft to collect statistics about your system configuration, events, and configuration of WSUS to help Microsoft improve the quality, reliability and performance of the product. Valid options: true, false
 
 Default: true.
 
 #### `sync_from_microsoft_update`
 
-Specifices that this server should perform synchronizations against microsoft upate servers.  This assumes this wsus server is an upstream wsus server in your environment. Valid options: true, false
+Specifices that this server should perform synchronizations against Microsoft upate servers.  This assumes this WSUS server is an upstream WSUS server in your environment. Valid options: true, false
 
 Default: true.
 
+**Must be false if `replica_server` is true**
+
+#### `replica_server`
+
+Specifies that the server is a replica of an upstream server. It synchronizes the same updates, has the same target groups, approvals, accepted license agreements (EULAs), and declined status as the upstream server.
+
+Default: false.
+
+**If this is `true` then `upstream_wsus_server_name` must be specified and `sync_from_microsoft_update` must be set to false.**
+
 #### `upstream_wsus_server_name`
 
-The name of the upstream wsus server in your environment in which to synchronize this wsus server against.
+The name of the upstream WSUS server in your environment in which to synchronize this WSUS server against.
 
 Default: undef.
 
+**Required if `replica_server` is true**
+
 #### `upstream_wsus_server_port`
 
-The port of the upstream wsus server in your environment in which to synchronize this wsus server against.
+The port of the upstream WSUS server in your environment in which to synchronize this WSUS server against.
 
 Default: 80.
 
 #### `upstream_wsus_server_use_ssl`
 
-Specifies if the upstream wsus server in your environment in which to synchronize this wsus server against is using SSL.  Valid options: true, false
+Specifies if the upstream WSUS server in your environment in which to synchronize this WSUS server against is using SSL.  Valid options: true, false
 
 Default: false.
 
@@ -473,7 +499,7 @@ Default: 1.
 
 #### `trigger_full_synchronization_post_install`
 
-Specifies that an intial synchronization of wsus should happen immediately after installation. Valid options: true, false
+Specifies that an intial synchronization of WSUS should happen immediately after installation. Valid options: true, false
 
 Default: true.
 
@@ -481,7 +507,7 @@ Default: true.
 
 **NOTE: The time it takes to finish the initial synchronization depends on the languages, products, and update classifications that were selected.  It also depends on your internete connection as well.**
 
-**NOTE: When you perform post-installation configuration tasks in the wsus wizard, this is the part at the end that has a check box asking if you want to begin initial synchronization.**
+**NOTE: When you perform post-installation configuration tasks in the WSUS wizard, this is the part at the end that has a check box asking if you want to begin initial synchronization.**
 
 #### `send_sync_notification`
 

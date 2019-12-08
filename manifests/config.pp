@@ -8,6 +8,7 @@ class wsusserver::config(
   Array[String, 1] $update_classifications,
   Boolean $join_improvement_program                  = $wsusserver::params::join_improvement_program,
   Boolean $sync_from_microsoft_update                = $wsusserver::params::sync_from_microsoft_update,
+  Boolean $replica_server                            = $wsusserver::params::replica_server,
   Optional[String] $upstream_wsus_server_name        = $wsusserver::params::upstream_wsus_server_name,
   Integer $upstream_wsus_server_port                 = $wsusserver::params::upstream_wsus_server_port,
   Boolean $upstream_wsus_server_use_ssl              = $wsusserver::params::upstream_wsus_server_use_ssl,
@@ -32,6 +33,37 @@ class wsusserver::config(
   String $smtp_sender_emailaddress                   = $wsusserver::params::smtp_sender_emailaddress,
   String $email_language                             = $wsusserver::params::email_language,
 ) inherits wsusserver::params {
+    if (!$sync_from_microsoft_update and $upstream_wsus_server_name == '') {
+      fail('must define an upstream_wsus_server_name if not syncing from Microsoft update')
+    }
+
+    if ($replica_server and $sync_from_microsoft_update) {
+      fail('you can\'t sync from Microsoft update when setting as a replica')
+    }
+
+    if $replica_server {
+      exec { 'wsus-config-set-as-replica':
+        command   => "\$ErrorActionPreference = \"Stop\"
+                      \$wsusConfiguration = (Get-WsusServer).GetConfiguration()
+                      \$wsusConfiguration.IsReplicaServer=\$${replica_server}
+                      \$wsusConfiguration.Save()
+                      While (\$wsusConfiguration.GetUpdateServerConfigurationState() -eq 'ProcessingSave') {
+                        Start-Sleep -Seconds 5
+                      }",
+        unless    => "\$ErrorActionPreference = \"Stop\"
+                      if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                        \$wsusConfiguration = (Get-WsusServer).GetConfiguration()
+                        \"Getting replica status which is: \$(\$wsusConfiguration.IsReplicaServer)\"
+                        if (\$wsusConfiguration.IsReplicaServer -eq \$${replica_server}) {
+                          Exit 0
+                        }
+                        Exit 1
+                      } Else {Exit 0}",
+        logoutput => true,
+        provider  => 'powershell',
+        require   => Exec['wsus-config-update-synchronization'],
+      }
+    }
 
     exec { 'wsus-config-update-join-improvement-program':
       command   => "\$ErrorActionPreference = \"Stop\"
@@ -39,18 +71,19 @@ class wsusserver::config(
                     \$wsusConfiguration.MURollupOptin=\$${join_improvement_program}
                     \$wsusConfiguration.Save()
                     While (\$wsusConfiguration.GetUpdateServerConfigurationState() -eq 'ProcessingSave') {
-                      Write-Output \".\" -NoNewline
                       Start-Sleep -Seconds 5
                     }",
-      unless    => "\$wsusConfiguration = (Get-WsusServer).GetConfiguration()
-                    if (\$wsusConfiguration.MURollupOptin -eq \$${join_improvement_program}) {
-                      Exit 0
-                    }
-                    Exit 1",
+      unless    => "\$ErrorActionPreference = \"Stop\"
+                    if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                      \$wsusConfiguration = (Get-WsusServer).GetConfiguration()
+                      if (\$wsusConfiguration.MURollupOptin -eq \$${join_improvement_program}) {
+                        Exit 0
+                      }
+                      Exit 1
+                    } Else {Exit 0}",
       logoutput => true,
       provider  => 'powershell',
     }
-
 
     if ($send_sync_notification or $send_status_notification) {
       # Ensure SMTP Hostname is set if needed
@@ -65,11 +98,14 @@ class wsusserver::config(
                       \$wsusEmailNotificationConfiguration.SmtpHostName = \"${smtp_hostname}\"
                       \$wsusEmailNotificationConfiguration.Save()
                      ",
-        unless    => "\$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
-                      if (\$wsusEmailNotificationConfiguration.SmtpHostName -eq \"${smtp_hostname}\") {
-                        Exit 0
-                      }
-                      Exit 1",
+        unless    => "\$ErrorActionPreference = \"Stop\"
+                      if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                        \$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                        if (\$wsusEmailNotificationConfiguration.SmtpHostName -eq \"${smtp_hostname}\") {
+                          Exit 0
+                        }
+                        Exit 1
+                      } Else {Exit 0}",
         logoutput => true,
         provider  => 'powershell',
       }
@@ -83,11 +119,14 @@ class wsusserver::config(
                       \$wsusEmailNotificationConfiguration.SenderEmailAddress = \"${smtp_sender_emailaddress}\"
                       \$wsusEmailNotificationConfiguration.Save()
                      ",
-        unless    => "\$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
-                      if ((\$wsusEmailNotificationConfiguration.SenderDisplayName -eq \"${smtp_sender_displayname}\") -and (\$wsusEmailNotificationConfiguration.SenderEmailAddress.toString() -eq \"${smtp_sender_emailaddress}\")) {
-                        Exit 0
-                      }
-                      Exit 1",
+        unless    => "\$ErrorActionPreference = \"Stop\"
+                      if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                        \$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                        if ((\$wsusEmailNotificationConfiguration.SenderDisplayName -eq \"${smtp_sender_displayname}\") -and (\$wsusEmailNotificationConfiguration.SenderEmailAddress.toString() -eq \"${smtp_sender_emailaddress}\")) {
+                          Exit 0
+                        }
+                        Exit 1
+                      } Else {Exit 0}",
         logoutput => true,
         provider  => 'powershell',
       }
@@ -104,15 +143,17 @@ class wsusserver::config(
                       \$wsusEmailNotificationConfiguration.EmailLanguage = \"${email_language}\"
                       \$wsusEmailNotificationConfiguration.Save()
                      ",
-        unless    => "\$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
-                      if (\$wsusEmailNotificationConfiguration.EmailLanguage -eq \"${email_language}\") {
-                        Exit 0
-                      }
-                      Exit 1",
+        unless    => "\$ErrorActionPreference = \"Stop\"
+                      if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                        \$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                        if (\$wsusEmailNotificationConfiguration.EmailLanguage -eq \"${email_language}\") {
+                          Exit 0
+                        }
+                        Exit 1
+                      } Else {Exit 0}",
         logoutput => true,
         provider  => 'powershell',
       }
-
     }
 
     # Sync Notification Settings
@@ -130,11 +171,14 @@ class wsusserver::config(
                     }
                     \$wsusEmailNotificationConfiguration.Save()
                    ",
-      unless    => "\$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
-                    if (\$wsusEmailNotificationConfiguration.SendSyncNotification -eq \$${send_sync_notification}) {
-                      Exit 0
-                    }
-                    Exit 1",
+      unless    => "\$ErrorActionPreference = \"Stop\"
+                    if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                      \$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                      if (\$wsusEmailNotificationConfiguration.SendSyncNotification -eq \$${send_sync_notification}) {
+                        Exit 0
+                      }
+                      Exit 1
+                    } Else {Exit 0}",
       logoutput => true,
       provider  => 'powershell',
     }
@@ -155,11 +199,14 @@ class wsusserver::config(
                     }
                     \$wsusEmailNotificationConfiguration.Save()
                    ",
-      unless    => "\$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
-                    if (\$wsusEmailNotificationConfiguration.SendStatusNotification -eq \$${send_status_notification}) {
-                      Exit 0
-                    }
-                    Exit 1",
+      unless    => "\$ErrorActionPreference = \"Stop\"
+                    if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                      \$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                      if (\$wsusEmailNotificationConfiguration.SendStatusNotification -eq \$${send_status_notification}) {
+                        Exit 0
+                      }
+                      Exit 1
+                    } Else {Exit 0}",
       logoutput => true,
       provider  => 'powershell',
     }
@@ -181,17 +228,20 @@ class wsusserver::config(
                     #Save
                     \$wsusEmailNotificationConfiguration.Save()
                    ",
-      unless    => "\$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
-                    \$wsusEmailSyncNotificationRecipients = \$wsusEmailNotificationConfiguration.SyncNotificationRecipients.toString()
-                    if (\$wsusEmailNotificationConfiguration.SendSyncNotification -eq \$false) {
-                      #Can't change recipients if sendsyncnotification is false
-                      Exit 0
-                    }
-                    if (\$wsusEmailSyncNotificationRecipients -eq \"${sync_recipients}\") {
-                      #Recipient list is correct
-                      Exit 0
-                    }
-                    Exit 1",
+      unless    => "\$ErrorActionPreference = \"Stop\"
+                    if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                      \$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                      \$wsusEmailSyncNotificationRecipients = \$wsusEmailNotificationConfiguration.SyncNotificationRecipients.toString()
+                      if (\$wsusEmailNotificationConfiguration.SendSyncNotification -eq \$false) {
+                        #Can't change recipients if sendsyncnotification is false
+                        Exit 0
+                      }
+                      if (\$wsusEmailSyncNotificationRecipients -eq \"${sync_recipients}\") {
+                        #Recipient list is correct
+                        Exit 0
+                      }
+                      Exit 1
+                    } Else {Exit 0}",
       logoutput => true,
       provider  => 'powershell',
     }
@@ -213,13 +263,16 @@ class wsusserver::config(
                       #Save
                       \$wsusEmailNotificationConfiguration.Save()
                      ",
-        unless    => "\$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
-                      \$wsusEmailStatusNotificationRecipients = \$wsusEmailNotificationConfiguration.StatusNotificationRecipients.toString()
-                      if (\$wsusEmailStatusNotificationRecipients -eq \"${status_recipients}\") {
-                        #Recipient list is correct
-                        Exit 0
-                      }
-                      Exit 1",
+        unless    => "\$ErrorActionPreference = \"Stop\"
+                      if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                        \$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                        \$wsusEmailStatusNotificationRecipients = \$wsusEmailNotificationConfiguration.StatusNotificationRecipients.toString()
+                        if (\$wsusEmailStatusNotificationRecipients -eq \"${status_recipients}\") {
+                          #Recipient list is correct
+                          Exit 0
+                        }
+                        Exit 1
+                      } Else {Exit 0}",
         logoutput => true,
         provider  => 'powershell',
       }
@@ -232,11 +285,14 @@ class wsusserver::config(
                       \$wsusEmailNotificationConfiguration.StatusNotificationFrequency = \"${notification_frequency}\"
                       \$wsusEmailNotificationConfiguration.Save()
                      ",
-        unless    => "\$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
-                      if (\$wsusEmailNotificationConfiguration.StatusNotificationFrequency -eq \"${notification_frequency}\") {
-                        Exit 0
-                      }
-                      Exit 1",
+        unless    => "\$ErrorActionPreference = \"Stop\"
+                      if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                        \$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                        if (\$wsusEmailNotificationConfiguration.StatusNotificationFrequency -eq \"${notification_frequency}\") {
+                          Exit 0
+                        }
+                        Exit 1
+                      } Else {Exit 0}",
         logoutput => true,
         provider  => 'powershell',
       }
@@ -249,42 +305,66 @@ class wsusserver::config(
                       \$wsusEmailNotificationConfiguration.StatusNotificationTimeOfDay = \"${notification_time_of_day}\"
                       \$wsusEmailNotificationConfiguration.Save()
                      ",
-        unless    => "\$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
-                      if (\$wsusEmailNotificationConfiguration.StatusNotificationTimeOfDay -eq \"${notification_time_of_day}\") {
-                        Exit 0
-                      }
-                      Exit 1",
+        unless    => "\$ErrorActionPreference = \"Stop\"
+                      if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                        \$wsusEmailNotificationConfiguration = (Get-WsusServer).GetEmailNotificationConfiguration()
+                        if (\$wsusEmailNotificationConfiguration.StatusNotificationTimeOfDay -eq \"${notification_time_of_day}\") {
+                          Exit 0
+                        }
+                        Exit 1
+                      } Else {Exit 0}",
         logoutput => true,
         provider  => 'powershell',
       }
-
     }
 
-    # TODO: Implement idempotence check for upstream server.  currently i just execute this is sync from microsoft
-    #       flag changes
     # Gets or sets whether update binaries are downloaded from Microsoft Update or from the upstream server.
+    # Updates upstream_server details if they change when not using Microsoft for updates
     exec { 'wsus-config-update-synchronization':
       command   => "\$ErrorActionPreference = \"Stop\"
                     \$wsusConfiguration = (Get-WsusServer).GetConfiguration()
-                    \$wsusConfiguration.SyncFromMicrosoftUpdate=\$${sync_from_microsoft_update}
+                    if (\$wsusConfiguration.SyncFromMicrosoftUpdate -ne \$${sync_from_microsoft_update}) {
+                      \$wsusConfiguration.SyncFromMicrosoftUpdate=\$${sync_from_microsoft_update}
+                    }
                     if (\$${sync_from_microsoft_update} -eq \$false) {
-                      \$wsusConfiguration.UpstreamWsusServerName = \"${upstream_wsus_server_name}\"
-                      \$wsusConfiguration.UpstreamWsusServerPortNumber = ${upstream_wsus_server_port}
-                      \$wsusConfiguration.UpstreamWsusServerUseSsl = \$${upstream_wsus_server_use_ssl}
+                      if (\$wsusConfiguration.UpstreamWsusServerName -ne \"${upstream_wsus_server_name}\") {
+                        \$wsusConfiguration.UpstreamWsusServerName = \"${upstream_wsus_server_name}\"
+                      }
+                      if (\$wsusConfiguration.UpstreamWsusServerPortNumber -ne ${upstream_wsus_server_port}) {
+                        \$wsusConfiguration.UpstreamWsusServerPortNumber = ${upstream_wsus_server_port}
+                      }
+                      if (\$wsusConfiguration.UpstreamWsusServerUseSsl -ne \$${upstream_wsus_server_use_ssl}) {
+                        \$wsusConfiguration.UpstreamWsusServerUseSsl = \$${upstream_wsus_server_use_ssl}
+                      }
+                    }
+                    elseif (\$wsusConfiguration.IsReplicaServer -eq \$true) {
+                      # Can't be a replica if using MS for updates so switch it off
+                      \$wsusConfiguration.IsReplicaServer = \$false
                     }
                     \$wsusConfiguration.Save()
                     While (\$wsusConfiguration.GetUpdateServerConfigurationState() -eq 'ProcessingSave') {
-                      Write-Output \".\" -NoNewline
                       Start-Sleep -Seconds 5
                     }",
-      unless    => "\$wsusConfiguration = (Get-WsusServer).GetConfiguration()
-                    if (\$wsusConfiguration.SyncFromMicrosoftUpdate -eq \$${sync_from_microsoft_update}) {
-                      Exit 0
-                    }
-                    Exit 1",
+      unless    => "\$ErrorActionPreference = \"Stop\"
+                    if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                      \$wsusConfiguration = (Get-WsusServer).GetConfiguration()
+                      if (\$${sync_from_microsoft_update} -eq \$false) {
+                        if (\$wsusConfiguration.SyncFromMicrosoftUpdate -eq \$false -and
+                            \$wsusConfiguration.UpstreamWsusServerName -eq \"${upstream_wsus_server_name}\" -and
+                            \$wsusConfiguration.UpstreamWsusServerPortNumber -eq ${upstream_wsus_server_port} -and
+                            \$wsusConfiguration.UpstreamWsusServerUseSsl -eq \$${upstream_wsus_server_use_ssl}) {
+                          Exit 0
+                        }
+                      }
+                      elseif (\$wsusConfiguration.SyncFromMicrosoftUpdate -eq \$true) {
+                        Exit 0
+                      }
+                      Exit 1
+                    } Else {Exit 0}",
       logoutput => true,
       provider  => 'powershell',
     }
+
     # TODO:
     # 1.) handle * for all languages instead of having to explicitly list them out
     # 2.) handle better idempotence just in case someone makes a change on the server in the ui? ( all languages )
@@ -297,22 +377,24 @@ class wsusserver::config(
                     \$wsusConfiguration.SetEnabledUpdateLanguages(\"${comma_seperated_update_languages}\" -split \",\")
                     \$wsusConfiguration.Save()
                     While (\$wsusConfiguration.GetUpdateServerConfigurationState() -eq 'ProcessingSave') {
-                      Write-Output \".\" -NoNewline
                       Start-Sleep -Seconds 5
                     }",
-      unless    => "\$wsusServerConfig = (Get-WsusServer).GetConfiguration()
-                    \$currentEnabledLanguages = \$wsusServerConfig.GetEnabledUpdateLanguages()
-                    \$compareResult = Compare-Object -ReferenceObject \$currentEnabledLanguages -DifferenceObject (\"${comma_seperated_update_languages}\").Split(\",\")
-                    if(\$compareResult -eq \$null)
-                    {
-                        # no differences
-                        Exit 0
-                    }
-                    else
-                    {
-                        # differences
-                        Exit 1
-                    }",
+      unless    => "\$ErrorActionPreference = \"Stop\"
+                    if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                      \$wsusServerConfig = (Get-WsusServer).GetConfiguration()
+                      \$currentEnabledLanguages = \$wsusServerConfig.GetEnabledUpdateLanguages()
+                      \$compareResult = Compare-Object -ReferenceObject \$currentEnabledLanguages -DifferenceObject (\"${comma_seperated_update_languages}\").Split(\",\")
+                      if(\$compareResult -eq \$null)
+                      {
+                          # no differences
+                          Exit 0
+                      }
+                      else
+                      {
+                          # differences
+                          Exit 1
+                      }
+                    } Else {Exit 0}",
       logoutput => true,
       provider  => 'powershell',
     }
@@ -323,14 +405,16 @@ class wsusserver::config(
                     \$wsusConfiguration.TargetingMode = \"${targeting_mode}\"
                     \$wsusConfiguration.Save()
                     While (\$wsusConfiguration.GetUpdateServerConfigurationState() -eq 'ProcessingSave') {
-                      Write-Output \".\" -NoNewline
                       Start-Sleep -Seconds 5
                     }",
-      unless    => "\$targetingMode = (Get-WsusServer).GetConfiguration().TargetingMode
-                    if (\$targetingMode -eq \"${targeting_mode}\") {
-                      Exit 0
-                    }
-                    Exit 1",
+      unless    => "\$ErrorActionPreference = \"Stop\"
+                    if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                      \$targetingMode = (Get-WsusServer).GetConfiguration().TargetingMode
+                      if (\$targetingMode -eq \"${targeting_mode}\") {
+                        Exit 0
+                      }
+                      Exit 1
+                    } Else {Exit 0}",
       logoutput => true,
       provider  => 'powershell',
     }
@@ -344,224 +428,234 @@ class wsusserver::config(
                     \$subscription = (Get-WsusServer).GetSubscription()
                     \$subscription.StartSynchronizationForCategoryOnly()
                     While (\$subscription.GetSynchronizationStatus() -ne 'NotProcessing') {
-                      Write-Output \".\" -NoNewline
                       Start-Sleep -Seconds 5
                     }",
-      unless    => "\$firstSyncResult = (Get-WsusServer).GetSubscription().GetSynchronizationHistory()[0]
-                    if (\$firstSyncResult.Result -eq 'Succeeded') {
-                      Exit 0
-                    }
-                    Exit 1",
+      unless    => "\$ErrorActionPreference = \"Stop\"
+                    if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                      \$firstSyncResult = (Get-WsusServer).GetSubscription().GetSynchronizationHistory()[0]
+                      if (\$firstSyncResult.Result -eq 'Succeeded') {
+                        Exit 0
+                      }
+                      Exit 1
+                    } Else {Exit 0}",
       logoutput => true,
       timeout   => 3600,
       provider  => 'powershell',
     }
 
-    # products and product_families we care about updates for ( office, sql server, windows server 2016, etc..)
-    $comma_seperated_products = join($products, ';')
-    $comma_seperated_product_families = join($product_families, ';')
+    # Only apply products and classifications on non-replica servers
+    if !$replica_server {
+      # products and product_families we care about updates for ( office, sql server, windows server 2016, etc..)
+      $comma_seperated_products = join($products, ';')
+      $comma_seperated_product_families = join($product_families, ';')
 
-    debug("Products: ${comma_seperated_products}")
-    debug("Product Families: ${comma_seperated_product_families}")
+      debug("Products: ${comma_seperated_products}")
+      debug("Product Families: ${comma_seperated_product_families}")
 
-    exec { 'wsus-config-update-products':
-      command   => "function Invoke-WsusCategoryConfig {
-                      param (
-                        [String[]]\$ProductTitles,
-                        [ValidateSet(\"product\", \"productfamily\")][String]\$Type,
-                        [Microsoft.UpdateServices.Administration.UpdateCategoryCollection]\$NewProducts
-                      )
+      exec { 'wsus-config-update-products':
+        command   => "function Invoke-WsusCategoryConfig {
+                        param (
+                          [String[]]\$ProductTitles,
+                          [ValidateSet(\"product\", \"productfamily\")][String]\$Type,
+                          [Microsoft.UpdateServices.Administration.UpdateCategoryCollection]\$NewProducts
+                        )
 
-                      # get all possible products
-                      \$allPossibleProducts = (Get-WsusServer).GetUpdateCategories() | Where-Object {\$_.type -eq \$Type}
+                        # get all possible products
+                        \$allPossibleProducts = (Get-WsusServer).GetUpdateCategories() | Where-Object {\$_.type -eq \$Type}
 
-                      # if product titles is not blank, then validate supplied product titles
-                      if (\$ProductTitles -ne \"\" -and \$null -ne \$ProductTitles) {
-                        ForEach (\$product in \$ProductTitles) {
-                          if (\$allPossibleProducts.Title -notcontains \$product) {
-                            # some invalid product names have been supplied
-                            # write to stderr but don't stop
-                            Write-Host \"Invalid product name supplied - \$product\" -ErrorAction Continue
-                            # a controlled exit with non-zero  status
-                            Exit 3
+                        # if product titles is not blank, then validate supplied product titles
+                        if (\$ProductTitles -ne \"\" -and \$null -ne \$ProductTitles) {
+                          ForEach (\$product in \$ProductTitles) {
+                            if (\$allPossibleProducts.Title -notcontains \$product) {
+                              # some invalid product names have been supplied
+                              # write to stderr but don't stop
+                              Write-Host \"Invalid product name supplied - \$product\" -ErrorAction Continue
+                              # a controlled exit with non-zero  status
+                              Exit 3
+                            }
+                            else {
+                              # product title is valid. add it to the new collection
+                              [void]\$NewProducts.add( (\$allPossibleProducts | Where-Object {\$_.Title -eq \$product -and \$_.type -eq \$Type} | Select-Object -First 1) )
+                            }
                           }
-                          else {
-                            # product title is valid. add it to the new collection
-                            [void]\$NewProducts.add( (\$allPossibleProducts | Where-Object {\$_.Title -eq \$product -and \$_.type -eq \$Type} | Select-Object -First 1) )
+                        }
+                        else {
+                          # no product titles supplied. that's fine, but we need an empty object to compare
+                          \$ProductTitles = @('')
+                        }
+
+                        # get all current synced products
+                        \$currentProducts = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateCategoryCollection
+
+                        # add currently enabled products and product families to the collection object
+                        \$wsusServerSubscription.GetUpdateCategories() | ForEach-Object {[void]\$currentProducts.add(\$_)}
+
+                        # get products configured that match the supplied type
+                        \$referenceObject = \$currentProducts | where-object {\$_.type -eq \$Type} | Select-Object -ExpandProperty Title -Unique
+
+                        # if none, blank array for object compare
+                        if (\$null -eq \$referenceObject) { \$referenceObject = @('') }
+
+                        # compare
+                        \$productCompare = Compare-Object -ReferenceObject \$referenceObject -DifferenceObject \$ProductTitles
+
+                        # loop throuch each difference
+                        Foreach (\$difference in \$productCompare) {
+                          # check it's not blank - this happens if no product titles have been supplied
+                          if (\$difference.InputObject -ne \"\") {
+                            if (\$difference.SideIndicator -eq \"=>\") {
+                              # it's in the desired list but not configured, so it's being added
+                              Write-Host \"Adding \$Type \$(\$difference.InputObject)\"
+                            }
+                            else {
+                              # it's not in the desired list but configured, so it's being removed
+                              Write-Host \"Removing \$Type \$(\$difference.InputObject)\"
+                            }
                           }
                         }
                       }
-                      else {
-                        # no product titles supplied. that's fine, but we need an empty object to compare
-                        \$ProductTitles = @('')
+
+                      trap {
+                        # using write-host so the error goes to stdout, which is all the puppet exec resource picks up
+                        Write-Host \"Unhandled exception caught:\"
+                        Write-Host \$_.invocationinfo.positionmessage.ToString() # Line the error was generated on
+                        Write-Host \$_.exception.ToString()                      # Error message
+                        exit 165
                       }
 
-                      # get all current synced products
-                      \$currentProducts = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateCategoryCollection
+                      \$ErrorActionPreference = \"Stop\"
+                      # interpolate variables from puppet
+                      \$commaSeparatedProducts = \"${comma_seperated_products}\"
+                      \$commaSeparatedProductFamilies = \"${comma_seperated_product_families}\"
+                      # get wsus server subscription configuration
+                      \$wsusServerSubscription = (Get-WsusServer).GetSubscription()
 
-                      # add currently enabled products and product families to the collection object
-                      \$wsusServerSubscription.GetUpdateCategories() | ForEach-Object {[void]\$currentProducts.add(\$_)}
+                      \$newUpdateCollection = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateCategoryCollection
 
-                      # get products configured that match the supplied type
-                      \$referenceObject = \$currentProducts | where-object {\$_.type -eq \$Type} | Select-Object -ExpandProperty Title -Unique
+                      # check for valid parameters
+                      if (\$commaSeparatedProducts -eq \"*\" -and \$commaSeparatedProductFamilies -ne \"\") {
+                        # write to stderr but don't stop
+                        Write-Host \"Cannot sync both all products (*) and a subset of product families\" -ErrorAction Continue
+                        # a controlled exit with non-zero  status
+                        Exit 2
+                      }
+                      elseif (\$commaSeparatedProducts -eq \"*\") {
+                        # synchronizing all products
+                        Write-Host \"Configuring WSUS to synchronize all products\"
+                        # add all categories to the collection
+                        (Get-WsusServer).GetUpdateCategories() | ForEach-Object {[void]\$newUpdateCollection.add(\$_)}
+                      }
+                      else {
+                        # synchronizing only specific products and/or families
 
-                      # if none, blank array for object compare
-                      if (\$null -eq \$referenceObject) { \$referenceObject = @('') }
-
-                      # compare
-                      \$productCompare = Compare-Object -ReferenceObject \$referenceObject -DifferenceObject \$ProductTitles
-
-                      # loop throuch each difference
-                      Foreach (\$difference in \$productCompare) {
-                        # check it's not blank - this happens if no product titles have been supplied
-                        if (\$difference.InputObject -ne \"\") {
-                          if (\$difference.SideIndicator -eq \"=>\") {
-                            # it's in the desired list but not configured, so it's being added
-                            Write-Host \"Adding \$Type \$(\$difference.InputObject)\"
-                          }
-                          else {
-                            # it's not in the desired list but configured, so it's being removed
-                            Write-Host \"Removing \$Type \$(\$difference.InputObject)\"
-                          }
+                        # products
+                        if (\$commaSeparatedProducts -ne \"\" -and \$null -ne \$commaSeparatedProducts) {
+                          # we've been supplied some products to sync
+                          # split them back to an array
+                          \$products = \$commaSeparatedProducts -split \";\"
                         }
-                      }
-                    }
+                        else {
+                          \$products = \$null
 
-                    trap {
-                      # using write-host so the error goes to stdout, which is all the puppet exec resource picks up
-                      Write-Host \"Unhandled exception caught:\"
-                      Write-Host \$_.invocationinfo.positionmessage.ToString() # Line the error was generated on
-                      Write-Host \$_.exception.ToString()                      # Error message
-                      exit 165
-                    }
+                        }
+                        if (\$commaSeparatedProductFamilies -ne \"\" -and \$null -ne \$commaSeparatedProductFamilies) {
+                          # we've been supplied some product families to sync
+                          # split them back to an array
+                          \$productFamilies = \$commaSeparatedProductFamilies -split \";\"
+                        }
+                        else {
+                          \$productFamilies = \$null
+                        }
 
-                    \$ErrorActionPreference = \"Stop\"
-                    # interpolate variables from puppet
-                    \$commaSeparatedProducts = \"${comma_seperated_products}\"
-                    \$commaSeparatedProductFamilies = \"${comma_seperated_product_families}\"
-                    # get wsus server subscription configuration
-                    \$wsusServerSubscription = (Get-WsusServer).GetSubscription()
-
-                    \$newUpdateCollection = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateCategoryCollection
-
-                    # check for valid parameters
-                    if (\$commaSeparatedProducts -eq \"*\" -and \$commaSeparatedProductFamilies -ne \"\") {
-                      # write to stderr but don't stop
-                      Write-Host \"Cannot sync both all products (*) and a subset of product families\" -ErrorAction Continue
-                      # a controlled exit with non-zero  status
-                      Exit 2
-                    }
-                    elseif (\$commaSeparatedProducts -eq \"*\") {
-                      # synchronizing all products
-                      Write-Host \"Configuring WSUS to synchronize all products\"
-                      # add all categories to the collection
-                      (Get-WsusServer).GetUpdateCategories() | ForEach-Object {[void]\$newUpdateCollection.add(\$_)}
-                    }
-                    else {
-                      # synchronizing only specific products and/or families
-
-                      # products
-                      if (\$commaSeparatedProducts -ne \"\" -and \$null -ne \$commaSeparatedProducts) {
-                        # we've been supplied some products to sync
-                        # split them back to an array
-                        \$products = \$commaSeparatedProducts -split \";\"
-                      }
-                      else {
-                        \$products = \$null
-
-                      }
-                      if (\$commaSeparatedProductFamilies -ne \"\" -and \$null -ne \$commaSeparatedProductFamilies) {
-                        # we've been supplied some product families to sync
-                        # split them back to an array
-                        \$productFamilies = \$commaSeparatedProductFamilies -split \";\"
-                      }
-                      else {
-                        \$productFamilies = \$null
+                        Invoke-WsusCategoryConfig -ProductTitles \$products -Type \"product\" -NewProducts \$newUpdateCollection
+                        Invoke-WsusCategoryConfig -ProductTitles \$productFamilies -Type \"productfamily\" -NewProducts \$newUpdateCollection
                       }
 
-                      Invoke-WsusCategoryConfig -ProductTitles \$products -Type \"product\" -NewProducts \$newUpdateCollection
-                      Invoke-WsusCategoryConfig -ProductTitles \$productFamilies -Type \"productfamily\" -NewProducts \$newUpdateCollection
-                    }
+                      # configure wsus
+                      \$wsusServerSubscription.SetUpdateCategories(\$newUpdateCollection)
+                      \$wsusServerSubscription.Save()",
 
-                    # configure wsus
-                    \$wsusServerSubscription.SetUpdateCategories(\$newUpdateCollection)
-                    \$wsusServerSubscription.Save()",
+        unless    => "trap {
+                        # using write-host so the error goes to stdout, which is all the puppet exec resource picks up
+                        Write-Host \"Unhandled exception caught:\"
+                        Write-Host \$_.invocationinfo.positionmessage.ToString() # Line the error was generated on
+                        Write-Host \$_.exception.ToString()                      # Error message
+                        exit 165
+                      }
+                      \$ErrorActionPreference = \"Stop\"
+                      # interpolate variables from puppet
+                                \$commaSeparatedProducts = \"${comma_seperated_products}\"
+                                \$commaSeparatedProductFamilies = \"${comma_seperated_product_families}\"
+                      if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                        # get current wsus subscription config
+                        \$wsusServerSubscription = (Get-WsusServer).GetSubscription()
+                        if (\$commaSeparatedProducts -eq \"*\") {
+                          # all products should be selected
+                          \$desired_products = ((Get-WsusServer).GetUpdateCategories() | Where-Object {\$_.type -eq \"product\"}).Title
+                          \$desired_productfamilies = ((Get-WsusServer).GetUpdateCategories() | Where-Object {\$_.type -eq \"productfamily\"}).Title
+                        }
+                        else {
+                          \$desired_products = \$commaSeparatedProducts.Split(\";\")
+                          \$desired_productfamilies = \$commaSeparatedProductFamilies.Split(\";\")
+                        }
+                        # get current enabled product families, blank array if none
+                        \$currentEnabledProductFamilies = (\$wsusServerSubscription.GetUpdateCategories() | Where-Object {\$_.type -eq \"productfamily\"}).Title
+                        if (\$null -eq \$currentEnabledProductFamilies) { \$currentEnabledProductFamilies = @('') }
+                        # get current enabled products, blank array if none
+                        \$currentEnabledProducts = (\$wsusServerSubscription.GetUpdateCategories() | Where-Object {\$_.type -eq \"product\"}).Title
+                        if (\$null -eq \$currentEnabledProducts) { \$currentEnabledProducts = @('') }
+                        # compare product families
+                        \$compareProductFamiliesResult = Compare-Object -ReferenceObject \$currentEnabledProductFamilies -DifferenceObject \$desired_productfamilies
+                        # compare products
+                        \$compareProductsResult = Compare-Object -ReferenceObject \$currentEnabledProducts -DifferenceObject \$desired_products
+                        # check results
+                        if (\$null -eq \$compareProductFamiliesResult -and \$null -eq \$compareProductsResult) {
+                          # no differences
+                          Exit 0
+                        }
+                        else {
+                          Write-Host \"WSUS product or product family configuration does not match desired state\"
+                          # differences
+                          Exit 1
+                        }
+                      } Else {Exit 0}",
+        logoutput => true,
+        provider  => 'powershell',
+      }
 
-      unless    => "trap {
-                      # using write-host so the error goes to stdout, which is all the puppet exec resource picks up
-                      Write-Host \"Unhandled exception caught:\"
-                      Write-Host \$_.invocationinfo.positionmessage.ToString() # Line the error was generated on
-                      Write-Host \$_.exception.ToString()                      # Error message
-                      exit 165
-                    }
-                    \$ErrorActionPreference = \"Stop\"
-                    # interpolate variables from puppet
-                              \$commaSeparatedProducts = \"${comma_seperated_products}\"
-                              \$commaSeparatedProductFamilies = \"${comma_seperated_product_families}\"
-                    # get current wsus subscription config
-                    \$wsusServerSubscription = (Get-WsusServer).GetSubscription()
-                    if (\$commaSeparatedProducts -eq \"*\") {
-                      # all products should be selected
-                      \$desired_products = ((Get-WsusServer).GetUpdateCategories() | Where-Object {\$_.type -eq \"product\"}).Title
-                      \$desired_productfamilies = ((Get-WsusServer).GetUpdateCategories() | Where-Object {\$_.type -eq \"productfamily\"}).Title
-                    }
-                    else {
-                      \$desired_products = \$commaSeparatedProducts.Split(\";\")
-                      \$desired_productfamilies = \$commaSeparatedProductFamilies.Split(\";\")
-                    }
-                    # get current enabled product families, blank array if none
-                    \$currentEnabledProductFamilies = (\$wsusServerSubscription.GetUpdateCategories() | Where-Object {\$_.type -eq \"productfamily\"}).Title
-                    if (\$null -eq \$currentEnabledProductFamilies) { \$currentEnabledProductFamilies = @('') }
-                    # get current enabled products, blank array if none
-                    \$currentEnabledProducts = (\$wsusServerSubscription.GetUpdateCategories() | Where-Object {\$_.type -eq \"product\"}).Title
-                    if (\$null -eq \$currentEnabledProducts) { \$currentEnabledProducts = @('') }
-                    # compare product families
-                    \$compareProductFamiliesResult = Compare-Object -ReferenceObject \$currentEnabledProductFamilies -DifferenceObject \$desired_productfamilies
-                    # compare products
-                    \$compareProductsResult = Compare-Object -ReferenceObject \$currentEnabledProducts -DifferenceObject \$desired_products
-                    # check results
-                    if (\$null -eq \$compareProductFamiliesResult -and \$null -eq \$compareProductsResult) {
-                      # no differences
-                      Exit 0
-                    }
-                    else {
-                      Write-Host \"WSUS product or product family configuration does not match desired state\"
-                      # differences
-                      Exit 1
-                    }",
-      logoutput => true,
-      provider  => 'powershell',
-    }
-
-    # The update classifications we care about ( critical, security, defintion.. etc )
-    $comma_seperated_update_classifications = join($update_classifications, ';')
-    exec { 'wsus-config-update-classifications':
-      command   => "\$ErrorActionPreference = \"Stop\"
-                    \$wsusServerSubscription = (Get-WsusServer).GetSubscription()
-                    \$allPossibleUpdateClassifications = (Get-WsusServer).GetUpdateClassifications()
-                    \$coll = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateClassificationCollection
-                    \$allPossibleUpdateClassifications | Where-Object { (\"${comma_seperated_update_classifications}\" -split \";\") -contains \$PSItem.Title  } | ForEach-Object { \$coll.Add(\$_) }
-                    \$wsusServerSubscription.SetUpdateClassifications(\$coll)
-                    \$wsusServerSubscription.Save()",
-      unless    => "\$wsusServerSubscription = (Get-WsusServer).GetSubscription()
-                    \$currentEnabledUpdateClassifications = \$wsusServerSubscription.GetUpdateClassifications().Title
-                    if(\$currentEnabledUpdateClassifications -eq \$null)
-                    {
-                      \$currentEnabledUpdateClassifications = @('')
-                    }
-                    \$compareResult = Compare-Object -ReferenceObject \$currentEnabledUpdateClassifications -DifferenceObject (\"${comma_seperated_update_classifications}\").Split(\";\")
-                    if(\$compareResult -eq \$null)
-                    {
-                        # no differences
-                        Exit 0
-                    }
-                    else
-                    {
-                        # differences
-                        Exit 1
-                    }",
-      logoutput => true,
-      provider  => 'powershell',
+      # The update classifications we care about ( critical, security, defintion.. etc )
+      $comma_seperated_update_classifications = join($update_classifications, ';')
+      exec { 'wsus-config-update-classifications':
+        command   => "\$ErrorActionPreference = \"Stop\"
+                      \$wsusServerSubscription = (Get-WsusServer).GetSubscription()
+                      \$allPossibleUpdateClassifications = (Get-WsusServer).GetUpdateClassifications()
+                      \$coll = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateClassificationCollection
+                      \$allPossibleUpdateClassifications | Where-Object { (\"${comma_seperated_update_classifications}\" -split \";\") -contains \$PSItem.Title  } | ForEach-Object { \$coll.Add(\$_) }
+                      \$wsusServerSubscription.SetUpdateClassifications(\$coll)
+                      \$wsusServerSubscription.Save()",
+        unless    => "\$ErrorActionPreference = \"Stop\"
+                      if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                        \$wsusServerSubscription = (Get-WsusServer).GetSubscription()
+                        \$currentEnabledUpdateClassifications = \$wsusServerSubscription.GetUpdateClassifications().Title
+                        if(\$currentEnabledUpdateClassifications -eq \$null)
+                        {
+                          \$currentEnabledUpdateClassifications = @('')
+                        }
+                        \$compareResult = Compare-Object -ReferenceObject \$currentEnabledUpdateClassifications -DifferenceObject (\"${comma_seperated_update_classifications}\").Split(\";\")
+                        if(\$compareResult -eq \$null)
+                        {
+                            # no differences
+                            Exit 0
+                        }
+                        else
+                        {
+                            # differences
+                            Exit 1
+                        }
+                      } Else {Exit 0}",
+        logoutput => true,
+        provider  => 'powershell',
+      }
     }
 
     # Host binaries on microsoft update or download them and serve them to client from the wsus server
@@ -572,19 +666,21 @@ class wsusserver::config(
                     \$wsusConfiguration.HostBinariesOnMicrosoftUpdate=\$${host_binaries_on_microsoft_update}
                     \$wsusConfiguration.Save()
                     While (\$wsusConfiguration.GetUpdateServerConfigurationState() -eq 'ProcessingSave') {
-                      Write-Output \".\" -NoNewline
                       Start-Sleep -Seconds 5
                     }",
-      unless    => "\$wsusConfiguration = (Get-WsusServer).GetConfiguration()
-                    if (\$wsusConfiguration.HostBinariesOnMicrosoftUpdate -eq \$${host_binaries_on_microsoft_update}) {
-                      Exit 0
-                    }
-                    Exit 1",
+      unless    => "\$ErrorActionPreference = \"Stop\"
+                    if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                      \$wsusConfiguration = (Get-WsusServer).GetConfiguration()
+                      if (\$wsusConfiguration.HostBinariesOnMicrosoftUpdate -eq \$${host_binaries_on_microsoft_update}) {
+                        Exit 0
+                      }
+                      Exit 1
+                    } Else {Exit 0}",
       logoutput => true,
       provider  => 'powershell',
     }
 
-        # IUpdateServerConfiguration.DownloadUpdateBinariesAsNeeded
+    # IUpdateServerConfiguration.DownloadUpdateBinariesAsNeeded
     # Only download updates locally for approved updates and not all even if unapproved
 
 
@@ -595,14 +691,16 @@ class wsusserver::config(
                     \$wsusConfiguration.OobeInitialized=\$true
                     \$wsusConfiguration.Save()
                     While (\$wsusConfiguration.GetUpdateServerConfigurationState() -eq 'ProcessingSave') {
-                      Write-Output \".\" -NoNewline
                       Start-Sleep -Seconds 5
                     }",
-      unless    => "\$wsusConfiguration = (Get-WsusServer).GetConfiguration()
-                    if (\$wsusConfiguration.OobeInitialized -eq \$true) {
-                      Exit 0
-                    }
-                    Exit 1",
+      unless    => "\$ErrorActionPreference = \"Stop\"
+                    if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                      \$wsusConfiguration = (Get-WsusServer).GetConfiguration()
+                      if (\$wsusConfiguration.OobeInitialized -eq \$true) {
+                        Exit 0
+                      }
+                      Exit 1
+                    } Else {Exit 0}",
       logoutput => true,
       provider  => 'powershell',
     }
@@ -616,38 +714,44 @@ class wsusserver::config(
                     \$wsusSubscription.SynchronizeAutomaticallyTimeOfDay=[System.TimeSpan]::Parse(\"${synchronize_time_of_day}\")
                     \$wsusSubscription.NumberOfSynchronizationsPerDay=${number_of_synchronizations_per_day}
                     \$wsusSubscription.Save()",
-      unless    => "\$wsusSubscription = (Get-WsusServer).GetSubscription()
-                    if (\$wsusSubscription.SynchronizeAutomatically -eq \$${synchronize_automatically} -and
-                        \$wsusSubscription.NumberOfSynchronizationsPerDay -eq ${number_of_synchronizations_per_day} -and
-                        \$wsusSubscription.SynchronizeAutomaticallyTimeOfDay -eq [System.TimeSpan]::Parse(\"${synchronize_time_of_day}\")
-                    ) {
-                      Exit 0
-                    }
-                    Exit 1",
+      unless    => "\$ErrorActionPreference = \"Stop\"
+                    if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                      \$wsusSubscription = (Get-WsusServer).GetSubscription()
+                      if (\$wsusSubscription.SynchronizeAutomatically -eq \$${synchronize_automatically} -and
+                          \$wsusSubscription.NumberOfSynchronizationsPerDay -eq ${number_of_synchronizations_per_day} -and
+                          \$wsusSubscription.SynchronizeAutomaticallyTimeOfDay -eq [System.TimeSpan]::Parse(\"${synchronize_time_of_day}\")
+                      ) {
+                        Exit 0
+                      }
+                      Exit 1
+                    } Else {Exit 0}",
       logoutput => true,
       provider  => 'powershell',
     }
 
-    # Perform full syncrhronization immediately after all configuration is done
+    # Perform full synchronization immediately after all configuration is done
     if ($trigger_full_synchronization_post_install) {
       exec { 'wsus-post-configuration-full-synchronization':
       command   => "\$ErrorActionPreference = \"Stop\"
-                    \$wsusConfiguration = (Get-WsusServer).GetSubscription()
-                    \$wsusConfiguration.SynchronizeAutomatically=\$${synchronize_automatically}
-                    \$wsusConfiguration.SynchronizeAutomaticallyTimeOfDay=[System.TimeSpan]::Parse(\"${synchronize_time_of_day}\")
-                    \$wsusConfiguration.NumberOfSynchronizationsPerDay=${number_of_synchronizations_per_day}
-                    \$wsusConfiguration.Save()
+                    \$wsusConfiguration = (Get-WsusServer).GetConfiguration()
+                    \$wsusSubscription = (Get-WsusServer).GetSubscription()
+                    \$wsusSubscription.SynchronizeAutomatically=\$${synchronize_automatically}
+                    \$wsusSubscription.SynchronizeAutomaticallyTimeOfDay=[System.TimeSpan]::Parse(\"${synchronize_time_of_day}\")
+                    \$wsusSubscription.NumberOfSynchronizationsPerDay=${number_of_synchronizations_per_day}
+                    \$wsusSubscription.Save()
                     While (\$wsusConfiguration.GetUpdateServerConfigurationState() -eq 'ProcessingSave') {
-                      Write-Output \".\" -NoNewline
                       Start-Sleep -Seconds 5
                     }",
-      unless    => "\$wsusConfiguration = (Get-WsusServer).GetSubscription()
-                    if (\$wsusConfiguration.SynchronizeAutomatically -eq \$${synchronize_automatically}) {
-                      Exit 0
-                    }
-                    Exit 1",
+      unless    => "\$ErrorActionPreference = \"Stop\"
+                    if (Get-Command Get-WsusServer -ErrorAction SilentlyContinue) {
+                      \$wsusSubscription = (Get-WsusServer).GetSubscription()
+                      if (\$wsusSubscription.SynchronizeAutomatically -eq \$${synchronize_automatically}) {
+                        Exit 0
+                      }
+                      Exit 1
+                    } Else {Exit 0}",
       logoutput => true,
       provider  => 'powershell',
     }
-    }
+  }
 }

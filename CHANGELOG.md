@@ -7,7 +7,11 @@ All notable changes to this project will be documented in this file. The format 
 ### Added
 
 - wsusserver: support nesting of computer target groups
+- wsusserver: support no-op when WSUS not actually installed
+- wsusserver: added support for replica wsus servers
 - config.pp: fixed update sync settings (provided by [nathangiuliani](https://github.com/nathangiuliani))
+- config.pp: fixed changing upstream server settings if download from MS is not altered
+- approvalrule.pp: fixed bugs that are present if a rule gets repeated which slow down processing
 
 ## [v1.1.2](https://github.com/tragiccode/tragiccode-wsusserver/tree/v1.1.2) (2019-09-17)
 
