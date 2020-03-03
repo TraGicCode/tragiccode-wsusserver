@@ -37,13 +37,13 @@ define wsusserver::approvalrule (
             provider  => 'powershell',
         }
 
-        $comma_seperated_classifications = join($classifications, ',')
+        $semicolon_seperated_classifications = join($classifications, ';')
         exec { "update-wsus-approvalrule-classifications-${rule_name}":
             command   => "\$ErrorActionPreference = \"Stop\"
                           \$wsus = Get-WsusServer
                           \$approvalRule = \$wsus.GetInstallApprovalRules() | Where-Object { \$PSItem.Name -eq \"${rule_name}\" }
                           \$classificationCollection = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateClassificationCollection -ErrorAction Stop
-                          Get-WsusClassification | Select-Object -ExpandProperty Classification | Where-Object { (\"${comma_seperated_classifications}\" -split \",\") -contains \$PSItem.Title  } | % { \$classificationCollection.Add(\$_) }  
+                          Get-WsusClassification | Select-Object -ExpandProperty Classification | Where-Object { (\"${semicolon_seperated_classifications}\" -split \";\") -contains \$PSItem.Title  } | % { \$classificationCollection.Add(\$_) }  
                           \$approvalRule.SetUpdateClassifications(\$classificationCollection)
                           \$approvalRule.Save()",
             onlyif    => "\$ErrorActionPreference = \"Stop\"
@@ -54,7 +54,7 @@ define wsusserver::approvalrule (
                           {
                             \$currentApprovalClassifications = \"\"
                           }
-                          \$compareResult = Compare-Object -ReferenceObject \$currentApprovalClassifications -DifferenceObject (\"${comma_seperated_classifications}\").Split(\",\")
+                          \$compareResult = Compare-Object -ReferenceObject \$currentApprovalClassifications -DifferenceObject (\"${semicolon_seperated_classifications}\").Split(\";\")
                           if(\$compareResult -eq \$null)
                           {
                             # no differences
@@ -64,13 +64,13 @@ define wsusserver::approvalrule (
             provider  => 'powershell',
         }
 
-        $comma_seperated_products = join($products, ',')
+        $semicolon_seperated_products = join($products, ';')
         exec { "update-wsus-approvalrule-products-${rule_name}":
             command   => "\$ErrorActionPreference = \"Stop\"
                           \$wsus = Get-WsusServer
                           \$approvalRule = \$wsus.GetInstallApprovalRules() | Where-Object { \$PSItem.Name -eq \"${rule_name}\" }
                           \$productCollection = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateCategoryCollection
-                          Get-WsusProduct | Select-Object -ExpandProperty Product | Where-Object { (\"${comma_seperated_products}\" -split \",\") -contains \$PSItem.Title  } | % { \$productCollection.Add(\$_) }  
+                          Get-WsusProduct | Select-Object -ExpandProperty Product | Where-Object { (\"${semicolon_seperated_products}\" -split \";\") -contains \$PSItem.Title  } | % { \$productCollection.Add(\$_) }  
                           \$approvalRule.SetCategories(\$productCollection)
                           \$approvalRule.Save()",
             onlyif    => "\$ErrorActionPreference = \"Stop\"
@@ -81,7 +81,7 @@ define wsusserver::approvalrule (
                           {
                             \$currentApprovalCategories = \"\"
                           }
-                          \$compareResult = Compare-Object -ReferenceObject \$currentApprovalCategories -DifferenceObject (\"${comma_seperated_products}\").Split(\",\")
+                          \$compareResult = Compare-Object -ReferenceObject \$currentApprovalCategories -DifferenceObject (\"${semicolon_seperated_products}\").Split(\";\")
                           if(\$compareResult -eq \$null)
                           {
                             # no differences
@@ -91,13 +91,13 @@ define wsusserver::approvalrule (
             provider  => 'powershell',
         }
 
-        $comma_seperated_computer_groups = join($computer_groups, ',')
+        $semicolon_seperated_computer_groups = join($computer_groups, ';')
         exec { "update-wsus-approvalrule-computer-groups-${rule_name}":
             command   => "\$ErrorActionPreference = \"Stop\"
                           \$wsus = Get-WsusServer
                           \$approvalRule = \$wsus.GetInstallApprovalRules() | Where-Object { \$PSItem.Name -eq \"${rule_name}\" }
                           \$computerGroupCollection = New-Object -TypeName Microsoft.UpdateServices.Administration.ComputerTargetGroupCollection
-                          (Get-WsusServer).GetComputerTargetGroups() | Where-Object { (\"${comma_seperated_computer_groups}\" -split \",\") -contains \$PSItem.Name  } | % { \$computerGroupCollection.Add(\$_) }  
+                          (Get-WsusServer).GetComputerTargetGroups() | Where-Object { (\"${semicolon_seperated_computer_groups}\" -split \";\") -contains \$PSItem.Name  } | % { \$computerGroupCollection.Add(\$_) }  
                           \$approvalRule.SetComputerTargetGroups(\$computerGroupCollection)
                           \$approvalRule.Save()",
             onlyif    => "\$ErrorActionPreference = \"Stop\"
@@ -108,7 +108,7 @@ define wsusserver::approvalrule (
                           {
                             \$currentComputerTargetGroups = \"\"
                           }
-                          \$compareResult = Compare-Object -ReferenceObject \$currentComputerTargetGroups -DifferenceObject (\"${comma_seperated_computer_groups}\").Split(\",\")
+                          \$compareResult = Compare-Object -ReferenceObject \$currentComputerTargetGroups -DifferenceObject (\"${semicolon_seperated_computer_groups}\").Split(\";\")
                           if(\$compareResult -eq \$null)
                           {
                             # no differences
