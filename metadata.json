@@ -1,6 +1,6 @@
 {
   "name": "tragiccode-wsusserver",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "author": "tragiccode",
   "summary": "The wsusserver module installs and manages the windows update services on Windows systems.",
   "license": "Apache-2.0",
@@ -25,7 +25,8 @@
     {
       "operatingsystem": "windows",
       "operatingsystemrelease": [
-        "2016"
+        "2016",
+        "2019"
       ]
     }
   ],
