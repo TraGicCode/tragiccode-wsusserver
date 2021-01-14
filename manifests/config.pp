@@ -512,7 +512,12 @@ class wsusserver::config(
                     else {
                       \$desired_products = \$commaSeparatedProducts.Split(\";\")
                       \$desired_productfamilies = \$commaSeparatedProductFamilies.Split(\";\")
+                      #Find all matching products name in the case of multiples
+                      \$desired_products = ((Get-WsusServer).GetUpdateCategories() | Where-Object {\$_.type -eq \"product\" -and \$desired_products -eq \$_.Title }).Title
+                      \$desired_productfamilies = ((Get-WsusServer).GetUpdateCategories() | Where-Object {\$_.type -eq \"productfamily\" -and \$desired_productfamilies -eq \$_.Title }).Title
                     }
+                    #Set desired_productfamilies to blank array if null
+                    if (\$null -eq \$desired_productfamilies) { \$desired_productfamilies = @('') }
                     # get current enabled product families, blank array if none
                     \$currentEnabledProductFamilies = (\$wsusServerSubscription.GetUpdateCategories() | Where-Object {\$_.type -eq \"productfamily\"}).Title
                     if (\$null -eq \$currentEnabledProductFamilies) { \$currentEnabledProductFamilies = @('') }
