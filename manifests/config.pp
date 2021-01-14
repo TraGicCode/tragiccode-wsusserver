@@ -386,8 +386,12 @@ class wsusserver::config(
                             Exit 3
                           }
                           else {
-                            # product title is valid. add it to the new collection
-                            [void]\$NewProducts.add( (\$allPossibleProducts | Where-Object {\$_.Title -eq \$product -and \$_.type -eq \$Type} | Select-Object -First 1) )
+                            \$matchingproduct = \$allPossibleProducts | Where-Object {\$_.Title -eq \$product -and \$_.type -eq \$Type}
+                            ForEach (\$product in \$matchingproduct) {
+                                # product title is valid. add it to the new collection
+                                #[void]\$NewProducts.add( (\$allPossibleProducts | Where-Object {\$_.Title -eq \$product -and \$_.type -eq \$Type} | Select-Object -Index 0) )
+                                [void]\$NewProducts.add( \$product )
+                            }
                           }
                         }
                       }
@@ -398,12 +402,12 @@ class wsusserver::config(
 
                       # get all current synced products
                       \$currentProducts = New-Object -TypeName Microsoft.UpdateServices.Administration.UpdateCategoryCollection
-
+                     
                       # add currently enabled products and product families to the collection object
                       \$wsusServerSubscription.GetUpdateCategories() | ForEach-Object {[void]\$currentProducts.add(\$_)}
 
                       # get products configured that match the supplied type
-                      \$referenceObject = \$currentProducts | where-object {\$_.type -eq \$Type} | Select-Object -ExpandProperty Title -Unique 
+                      \$referenceObject = \$currentProducts | where-object {\$_.type -eq \$Type} | Select-Object -ExpandProperty Title #-Unique 
 
                       # if none, blank array for object compare
                       if (\$null -eq \$referenceObject) { \$referenceObject = @('') }
