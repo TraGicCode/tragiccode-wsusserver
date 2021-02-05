@@ -386,11 +386,8 @@ class wsusserver::config(
                             Exit 3
                           }
                           else {
-                            \$matchingproduct = \$allPossibleProducts | Where-Object {\$_.Title -eq \$product -and \$_.type -eq \$Type}
-                            ForEach (\$product in \$matchingproduct) {
-                                # product title is valid. add it to the new collection
-                                [void]\$NewProducts.add( \$product )
-                            }
+                            # product title is valid. add it to the new collection
+                            [void]\$NewProducts.addRange( (\$allPossibleProducts | Where-Object {\$_.Title -eq \$product -and \$_.type -eq \$Type}) )
                           }
                         }
                       }
@@ -406,7 +403,7 @@ class wsusserver::config(
                       \$wsusServerSubscription.GetUpdateCategories() | ForEach-Object {[void]\$currentProducts.add(\$_)}
 
                       # get products configured that match the supplied type
-                      \$referenceObject = \$currentProducts | where-object {\$_.type -eq \$Type} | Select-Object -ExpandProperty Title
+                      \$referenceObject = \$currentProducts | where-object {\$_.type -eq \$Type} | Select-Object -ExpandProperty Title -Unique 
 
                       # if none, blank array for object compare
                       if (\$null -eq \$referenceObject) { \$referenceObject = @('') }
@@ -511,17 +508,12 @@ class wsusserver::config(
                     else {
                       \$desired_products = \$commaSeparatedProducts.Split(\";\")
                       \$desired_productfamilies = \$commaSeparatedProductFamilies.Split(\";\")
-                      #Find all matching products name in the case of multiples
-                      \$desired_products = ((Get-WsusServer).GetUpdateCategories() | Where-Object {\$_.type -eq \"product\" -and \$desired_products -eq \$_.Title }).Title
-                      \$desired_productfamilies = ((Get-WsusServer).GetUpdateCategories() | Where-Object {\$_.type -eq \"productfamily\" -and \$desired_productfamilies -eq \$_.Title }).Title
                     }
-                    #Set desired_productfamilies to blank array if null
-                    if (\$null -eq \$desired_productfamilies) { \$desired_productfamilies = @('') }
                     # get current enabled product families, blank array if none
-                    \$currentEnabledProductFamilies = (\$wsusServerSubscription.GetUpdateCategories() | Where-Object {\$_.type -eq \"productfamily\"}).Title
+                    \$currentEnabledProductFamilies = (\$wsusServerSubscription.GetUpdateCategories() | Where-Object {\$_.type -eq \"productfamily\"}).Title | Select-Object -Unique
                     if (\$null -eq \$currentEnabledProductFamilies) { \$currentEnabledProductFamilies = @('') }
                     # get current enabled products, blank array if none
-                    \$currentEnabledProducts = (\$wsusServerSubscription.GetUpdateCategories() | Where-Object {\$_.type -eq \"product\"}).Title
+                    \$currentEnabledProducts = (\$wsusServerSubscription.GetUpdateCategories() | Where-Object {\$_.type -eq \"product\"}).Title | Select-Object -Unique
                     if (\$null -eq \$currentEnabledProducts) { \$currentEnabledProducts = @('') }
                     # compare product families
                     \$compareProductFamiliesResult = Compare-Object -ReferenceObject \$currentEnabledProductFamilies -DifferenceObject \$desired_productfamilies
