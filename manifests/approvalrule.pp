@@ -76,7 +76,7 @@ define wsusserver::approvalrule (
             onlyif    => "\$ErrorActionPreference = \"Stop\"
                           \$wsus = Get-WsusServer
                           \$approvalRule = \$wsus.GetInstallApprovalRules() | Where-Object { \$PSItem.Name -eq \"${rule_name}\" }
-                          \$currentApprovalCategories = \$approvalRule.GetCategories() | Select-Object -ExpandProperty Title
+                          \$currentApprovalCategories = \$approvalRule.GetCategories() | Select-Object -ExpandProperty Title -Unique
                           if(\$currentApprovalCategories -eq \$null)
                           {
                             \$currentApprovalCategories = \"\"

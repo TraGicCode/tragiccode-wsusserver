@@ -387,7 +387,7 @@ class wsusserver::config(
                           }
                           else {
                             # product title is valid. add it to the new collection
-                            [void]\$NewProducts.add( (\$allPossibleProducts | Where-Object {\$_.Title -eq \$product -and \$_.type -eq \$Type} | Select-Object -First 1) )
+                            [void]\$NewProducts.addRange( (\$allPossibleProducts | Where-Object {\$_.Title -eq \$product -and \$_.type -eq \$Type}) )
                           }
                         }
                       }
@@ -510,10 +510,10 @@ class wsusserver::config(
                       \$desired_productfamilies = \$commaSeparatedProductFamilies.Split(\";\")
                     }
                     # get current enabled product families, blank array if none
-                    \$currentEnabledProductFamilies = (\$wsusServerSubscription.GetUpdateCategories() | Where-Object {\$_.type -eq \"productfamily\"}).Title
+                    \$currentEnabledProductFamilies = (\$wsusServerSubscription.GetUpdateCategories() | Where-Object {\$_.type -eq \"productfamily\"}).Title | Select-Object -Unique
                     if (\$null -eq \$currentEnabledProductFamilies) { \$currentEnabledProductFamilies = @('') }
                     # get current enabled products, blank array if none
-                    \$currentEnabledProducts = (\$wsusServerSubscription.GetUpdateCategories() | Where-Object {\$_.type -eq \"product\"}).Title
+                    \$currentEnabledProducts = (\$wsusServerSubscription.GetUpdateCategories() | Where-Object {\$_.type -eq \"product\"}).Title | Select-Object -Unique
                     if (\$null -eq \$currentEnabledProducts) { \$currentEnabledProducts = @('') }
                     # compare product families
                     \$compareProductFamiliesResult = Compare-Object -ReferenceObject \$currentEnabledProductFamilies -DifferenceObject \$desired_productfamilies
