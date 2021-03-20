@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org).
 
+## [v1.1.4](https://github.com/tragiccode/tragiccode-wsusserver/tree/v1.1.4) (2021-03-20)
+
+[Full Changelog](https://github.com/tragiccode/tragiccode-wsusserver/compare/v1.1.3...v1.1.4)
+
+### Fixed
+
+- \(GH-47\) wsus-config-update-products: Fixes Duplicate Product Name Selection [\#48](https://github.com/TraGicCode/tragiccode-wsusserver/pull/48) ([amr952](https://github.com/amr952))
+
 ## [v1.1.3](https://github.com/tragiccode/tragiccode-wsusserver/tree/v1.1.3) (2020-07-14)
 
 [Full Changelog](https://github.com/tragiccode/tragiccode-wsusserver/compare/v1.1.2...v1.1.3)
