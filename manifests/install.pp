@@ -8,20 +8,18 @@ class wsusserver::install(
   Boolean $join_improvement_program                = $wsusserver::params::join_improvement_program,
 ) inherits wsusserver::params {
 
-  dsc_windowsfeature { 'UpdateServices':
-    dsc_ensure => $package_ensure,
-    dsc_name   => 'UpdateServices',
-    notify     => Exec["post install wsus content directory ${wsus_directory}"],
+  windowsfeature { 'UpdateServices':
+    ensure => $package_ensure,
+    notify => Exec["post install wsus content directory ${wsus_directory}"],
   }
 
   $_management_console_ensure = $include_management_console ? {
     true    => 'present',
     default => 'absent',
   }
-  dsc_windowsfeature { 'UpdateServices-UI':
-    dsc_ensure => $_management_console_ensure,
-    dsc_name   => 'UpdateServices-UI',
-    require    => Dsc_windowsfeature['UpdateServices'],
+  windowsfeature { 'UpdateServices-UI':
+    ensure  => $_management_console_ensure,
+    require => Windowsfeature['UpdateServices'],
   }
 
   $join_improvement_program_flag = bool2num($join_improvement_program)
@@ -40,6 +38,6 @@ class wsusserver::install(
     refreshonly => true,
     timeout     => 1200,
     provider    => 'powershell',
-    require     => [Dsc_windowsfeature['UpdateServices'], Dsc_windowsfeature['UpdateServices-UI']]
+    require     => [Windowsfeature['UpdateServices'], Windowsfeature['UpdateServices-UI']]
   }
 }

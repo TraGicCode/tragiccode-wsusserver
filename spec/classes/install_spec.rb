@@ -6,15 +6,13 @@ describe 'wsusserver::install' do
     it { is_expected.to contain_class('wsusserver::params') }
 
     it {
-      is_expected.to contain_dsc_windowsfeature('UpdateServices')
-        .with(dsc_ensure: 'present',
-              dsc_name: 'UpdateServices')
+      is_expected.to contain_windowsfeature('UpdateServices')
+        .with(ensure: 'present',)
     }
 
     it {
-      is_expected.to contain_dsc_windowsfeature('UpdateServices-UI')
-        .with(dsc_ensure: 'present',
-              dsc_name: 'UpdateServices-UI')
+      is_expected.to contain_windowsfeature('UpdateServices-UI')
+        .with(ensure: 'present',)
     }
 
     it {
@@ -35,9 +33,8 @@ describe 'wsusserver::install' do
     end
 
     it {
-      is_expected.to contain_dsc_windowsfeature('UpdateServices')
-        .with(dsc_ensure: 'absent',
-              dsc_name: 'UpdateServices')
+      is_expected.to contain_windowsfeature('UpdateServices')
+        .with(ensure: 'absent',)
     }
     # TODO: I should uninstall this feature if the whole thing is getting uninstalled
     # it { should contain_dsc_windowsfeature('UpdateServices-UI').with({
@@ -54,9 +51,8 @@ describe 'wsusserver::install' do
     end
 
     it {
-      is_expected.to contain_dsc_windowsfeature('UpdateServices-UI')
-        .with(dsc_ensure: 'absent',
-              dsc_name: 'UpdateServices-UI')
+      is_expected.to contain_windowsfeature('UpdateServices-UI')
+        .with(ensure: 'absent',)
     }
   end
 end
