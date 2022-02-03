@@ -13,6 +13,7 @@ describe 'wsusserver_computer_target_group' do
           update_languages                          => ['en'],
           update_classifications                    => ['Critical Updates', 'Security Updates'],
         }
+        
 
         wsusserver_computer_target_group { '#{@computer_target_group_name}':
           ensure => 'present',
