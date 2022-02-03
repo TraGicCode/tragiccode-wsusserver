@@ -2,7 +2,7 @@
 # matches if the value is presented (quoted, or unquoted)
 # You can also pass a regex type as value and it will which is great for readonly properties that should have certain characteristics
 def puppet_resource_should_show(property_name, value)
-  it "should report the correct #{property_name} value" do
+  it "reports the correct #{property_name} value" do
     regex = if value.nil?
               %r{(#{property_name})(\s*)(=>)(\s*)}
             elsif value.is_a?(Regexp)
@@ -14,4 +14,4 @@ def puppet_resource_should_show(property_name, value)
             end
     expect(@result.stdout).to match(regex)
   end
-  end
+end
