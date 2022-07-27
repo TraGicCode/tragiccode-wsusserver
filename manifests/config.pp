@@ -347,7 +347,7 @@ class wsusserver::config(
                       Write-Output \".\" -NoNewline
                       Start-Sleep -Seconds 5
                     }",
-      unless    => "\$firstSyncResult = (Get-WsusServer).GetSubscription().GetSynchronizationHistory()[0]
+      unless    => "\$firstSyncResult = (Get-WsusServer).GetSubscription().GetSynchronizationHistory()[-1]
                     if (\$firstSyncResult.Result -eq 'Succeeded') {
                       Exit 0
                     }
