@@ -7,6 +7,9 @@
   "source": "https://github.com/TraGicCode/tragiccode-wsusserver",
   "project_page": "https://github.com/TraGicCode/tragiccode-wsusserver",
   "issues_url": "https://github.com/TraGicCode/tragiccode-wsusserver/issues",
+   "tags": [
+    "deprecated"
+  ],
   "dependencies": [
     {
       "name": "puppetlabs/stdlib",
