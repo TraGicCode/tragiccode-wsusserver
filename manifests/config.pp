@@ -11,6 +11,14 @@ class wsusserver::config(
   Optional[String] $upstream_wsus_server_name        = $wsusserver::params::upstream_wsus_server_name,
   Integer $upstream_wsus_server_port                 = $wsusserver::params::upstream_wsus_server_port,
   Boolean $upstream_wsus_server_use_ssl              = $wsusserver::params::upstream_wsus_server_use_ssl,
+  Boolean $use_proxy                                 = $wsusserver::params::use_proxy,
+  Optional[String] $proxy_server_name                = $wsusserver::params::proxy_server_name,
+  Integer $proxy_server_port                         = $wsusserver::params::proxy_server_port,
+  Boolean $allow_credentials_over_non_ssl            = $wsusserver::params::allow_credentials_over_non_ssl,
+  Boolean $anonymousproxyaccess                      = $wsusserver::params::anonymousproxyaccess,
+  Optional[String] $proxy_username                   = $wsusserver::params::proxy_username,
+  Optional[String] $proxy_password                   = $wsusserver::params::proxy_password,
+  Optional[String] $proxy_domain                     = $wsusserver::params::proxy_domain,  
   Enum['Server', 'Client'] $targeting_mode           = $wsusserver::params::targeting_mode,
   Boolean $host_binaries_on_microsoft_update         = $wsusserver::params::host_binaries_on_microsoft_update,
   Boolean $synchronize_automatically                 = $wsusserver::params::synchronize_automatically,
@@ -51,6 +59,30 @@ class wsusserver::config(
       provider  => 'powershell',
     }
 
+    exec { 'wsus-config-proxy-settings':
+      command   => "\$ErrorActionPreference = \"Stop\"
+                    \$wsusConfiguration = (Get-WsusServer).GetConfiguration()
+                    \$wsusConfiguration.UseProxy = \"${use_proxy}\"
+                    \$wsusConfiguration.ProxyName = \"${proxy_server_name}\"
+                    \$wsusConfiguration.ProxyServerPort = \"${proxy_server_port}\"
+                    \$$wsusConfiguration.ProxyUserDomain = \"${proxy_domain}\"\
+                    \$$wsusConfiguration.ProxyUserName = \"${proxy_username}\"
+                    \$$wsusConfiguration.SetProxyPassword = \"${proxy_password}\"
+                    \$$wsusConfiguration.AllowProxyCredentialsOverNonSsl = \"${allow_credentials_over_non_ssl}\"
+                    \$$wsusConfiguration.AnonymousProxyAccess = \"${anonymousproxyaccess}\"
+                    \$wsusConfiguration.Save()
+                    While (\$wsusConfiguration.GetUpdateServerConfigurationState() -eq 'ProcessingSave') {
+                      Write-Output \".\" -NoNewline
+                      Start-Sleep -Seconds 5
+                    }",
+      unless    => "\$use_proxy = (Get-WsusServer).GetConfiguration().use_proxy
+                    if (\$use_proxy -eq \"${use_proxy}\") {
+                      Exit 0
+                    }
+                    Exit 1",
+      logoutput => true,
+      provider  => 'powershell',
+    }
 
     if ($send_sync_notification or $send_status_notification) {
       # Ensure SMTP Hostname is set if needed
