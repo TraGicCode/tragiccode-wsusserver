@@ -1,3 +1,9 @@
+# **DEPRECATED** - no longer actively maintained
+
+This module was created a long time ago before there was a good option available in puppet for automating the installation and configuration of a WSUS Server. Since puppet now has support for leveraging Powershell DSC Resources, this module no longer makes sense. Therefore, This project has been deprecated and should no longer be used.  Please work on migrating to the solution provided by puppet https://forge.puppet.com/modules/dsc/updateservicesdsc .  
+
+NServiceBus.NewRelic.Anal
+
 # WSUSServer
 
 [![Puppet Forge](http://img.shields.io/puppetforge/v/tragiccode/wsusserver.svg)](https://forge.puppetlabs.com/tragiccode/wsusserver)
